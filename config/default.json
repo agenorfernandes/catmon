@@ -1,7 +1,8 @@
 {
   "mongoURI": "mongodb+srv://agenorfbp:jcA5ACDmRmFQ9YuB@catmon.qsweq.mongodb.net/?retryWrites=true&w=majority&appName=catmon",
-  "jwtSecret": "catmon_jwt_secret_key_change_in_production",
+  "jwtSecret": "katmon_jwt_secret_key_change_in_production",
   "googleClientId": "508080296158-oolionejtqmqdolsa1fjk2o94h5t3n17.apps.googleusercontent.com",
+  "googleClientSecret": "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",
   "appleClientId": "YOUR_APPLE_CLIENT_ID",
   "uploadPath": "uploads/"
 }

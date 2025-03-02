@@ -62,68 +62,6 @@ exports.getAllCats = async (req, res) => {
   }
 };
 
-// Excluir gato
-exports.deleteCat = async (req, res) => {
-  try {
-    const cat = await Cat.findById(req.params.id);
-    
-    if (!cat) {
-      return res.status(404).json({ msg: 'Gato não encontrado' });
-    }
-    
-    // Verificar se o usuário é o descobridor ou admin
-    const isAdmin = req.user.role === 'admin';
-    if (cat.discoveredBy.toString() !== req.user.id && !isAdmin) {
-      return res.status(403).json({ msg: 'Acesso negado. Você não pode excluir este gato' });
-    }
-    
-    // Excluir check-ins relacionados
-    await CheckIn.deleteMany({ cat: cat._id });
-    
-    // Excluir gato
-    await cat.remove();
-    
-    res.json({ msg: 'Gato removido' });
-  } catch (err) {
-    console.error(err.message);
-    
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Gato não encontrado' });
-    }
-    
-    res.status(500).json({ msg: 'Erro no servidor' });
-  }
-};
-
-// Obter gatos próximos
-exports.getNearbyCats = async (req, res) => {
-  try {
-    const { lat, lng, radius = 5000 } = req.query; // raio em metros
-    
-    if (!lat || !lng) {
-      return res.status(400).json({ msg: 'Latitude e longitude são necessárias' });
-    }
-    
-    const cats = await Cat.find({
-      location: {
-        $nearSphere: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
-          },
-          $maxDistance: parseInt(radius)
-        }
-      },
-      status: 'Ativo' // Apenas gatos ativos
-    }).populate('discoveredBy', 'name profilePicture');
-    
-    res.json(cats);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
-  }
-};
-
 // Obter gato por ID
 exports.getCatById = async (req, res) => {
   try {
@@ -271,3 +209,70 @@ exports.updateCat = async (req, res) => {
     );
 
     res.json(cat);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+};
+
+// Excluir gato
+exports.deleteCat = async (req, res) => {
+  try {
+    const cat = await Cat.findById(req.params.id);
+    
+    if (!cat) {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    // Verificar se o usuário é o descobridor ou admin
+    const isAdmin = req.user.role === 'admin';
+    if (cat.discoveredBy.toString() !== req.user.id && !isAdmin) {
+      return res.status(403).json({ msg: 'Acesso negado. Você não pode excluir este gato' });
+    }
+    
+    // Excluir check-ins relacionados
+    await CheckIn.deleteMany({ cat: cat._id });
+    
+    // Excluir gato
+    await cat.remove();
+    
+    res.json({ msg: 'Gato removido' });
+  } catch (err) {
+    console.error(err.message);
+    
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+};
+
+// Obter gatos próximos
+exports.getNearbyCats = async (req, res) => {
+  try {
+    const { lat, lng, radius = 5000 } = req.query; // raio em metros
+    
+    if (!lat || !lng) {
+      return res.status(400).json({ msg: 'Latitude e longitude são necessárias' });
+    }
+    
+    const cats = await Cat.find({
+      location: {
+        $nearSphere: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseInt(radius)
+        }
+      },
+      status: 'Ativo' // Apenas gatos ativos
+    }).populate('discoveredBy', 'name profilePicture');
+    
+    res.json(cats);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+};

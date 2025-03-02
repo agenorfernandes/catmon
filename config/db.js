@@ -1,8 +1,7 @@
-// Config para conectar ao MongoDB Atlas (serviço gratuito na nuvem)
+// Config para conectar ao MongoDB Atlas
 module.exports = {
-  // Substitua essa URI pela sua string de conexão do MongoDB Atlas
-  // Formato: mongodb+srv://<username>:<password>@cluster0.mongodb.net/catmon?retryWrites=true&w=majority
-  mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/catmon',
+  // Conexão direta com MongoDB Atlas
+  mongoURI: process.env.MONGO_URI || "mongodb+srv://agenorfbp:jcA5ACDmRmFQ9YuB@catmon.qsweq.mongodb.net/?retryWrites=true&w=majority&appName=catmon",
   
   // Opções de conexão
   options: {

@@ -2,7 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const config = require('../../config/default.json');
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(config.googleClientId);
+const googleClient = new OAuth2Client(config.googleClientId, config.googleClientSecret);
 const appleSignin = require('apple-signin-auth');
 
 // Registrar novo usuário
@@ -41,7 +41,7 @@ exports.register = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro ao registrar usuário:', err.message);
     res.status(500).json({ msg: 'Erro no servidor' });
   }
 };
@@ -82,7 +82,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro ao fazer login:', err.message);
     res.status(500).json({ msg: 'Erro no servidor' });
   }
 };
@@ -109,6 +109,7 @@ exports.googleLogin = async (req, res) => {
     
     if (!user) {
       // Criar novo usuário
+      console.log('Criando novo usuário com Google:', email);
       user = new User({
         name,
         email,
@@ -141,7 +142,7 @@ exports.googleLogin = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro no login com Google:', err.message);
     res.status(500).json({ msg: 'Erro no servidor' });
   }
 };
@@ -197,7 +198,7 @@ exports.appleLogin = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro no login com Apple:', err.message);
     res.status(500).json({ msg: 'Erro no servidor' });
   }
 };
@@ -213,7 +214,7 @@ exports.getMe = async (req, res) => {
     
     res.json(user);
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro ao obter dados do usuário:', err.message);
     res.status(500).json({ msg: 'Erro no servidor' });
   }
 };
@@ -224,7 +225,7 @@ exports.verifyToken = (req, res) => {
     const token = req.header('x-auth-token');
     
     if (!token) {
-      return res.status(401).json({ msg: 'Sem token, autorização negada' });
+      return res.status(401).json({ msg: 'Sem token, autorização negada', valid: false });
     }
     
     jwt.verify(token, config.jwtSecret);

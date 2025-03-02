@@ -15,11 +15,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Conectar ao MongoDB
-mongoose.connect(configDB.mongoURI)
-  .then(() => console.log('MongoDB Conectado...'))
+// Conectar ao MongoDB Atlas
+console.log('Conectando ao MongoDB Atlas...');
+mongoose.connect(configDB.mongoURI, configDB.options)
+  .then(() => console.log('MongoDB Atlas Conectado com Sucesso'))
   .catch(err => {
-    console.error('Erro na conexão com MongoDB:', err.message);
+    console.error('Erro na conexão com MongoDB Atlas:', err.message);
     process.exit(1);
   });
 
@@ -28,6 +29,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cats', catRoutes);
 app.use('/api/checkins', checkInRoutes);
 app.use('/api/users', userRoutes);
+
+// Rota de verificação de saúde
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'API KatMon funcionando',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 // Servir arquivos estáticos em produção
 if (process.env.NODE_ENV === 'production') {
@@ -40,6 +51,6 @@ if (process.env.NODE_ENV === 'production') {
 // Porta
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor KatMon rodando na porta ${PORT}`));
 
 module.exports = app;
