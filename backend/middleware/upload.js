@@ -1,6 +1,14 @@
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+
+// Certificar-se de que o diretório de upload existe
+const ensureUploadDirectory = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
 
 // Configuração de armazenamento (armazenamento local)
 const storage = multer.diskStorage({
@@ -9,14 +17,17 @@ const storage = multer.diskStorage({
     
     // Definir pasta de destino com base no tipo de upload
     if (file.fieldname === 'profilePicture') {
-      uploadPath = 'uploads/profiles';
+      uploadPath = path.join(__dirname, '../uploads/profiles');
     } else if (file.fieldname === 'photo' || file.fieldname === 'additionalPhotos') {
-      uploadPath = 'uploads/cats';
+      uploadPath = path.join(__dirname, '../uploads/cats');
     } else if (file.fieldname === 'photos') {
-      uploadPath = 'uploads/checkins';
+      uploadPath = path.join(__dirname, '../uploads/checkins');
     } else {
-      uploadPath = 'uploads/others';
+      uploadPath = path.join(__dirname, '../uploads/others');
     }
+    
+    // Criar diretório se não existir
+    ensureUploadDirectory(uploadPath);
     
     cb(null, uploadPath);
   },

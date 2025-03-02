@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -14,13 +14,19 @@ import { LocationContext } from '../contexts/LocationContext';
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
 import CatPopup from '../components/Map/CatPopup';
 
-// Corrigir o problema de ícones do Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+// Configuração de ícone padrão do Leaflet
+const DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 });
+
+// Definir o ícone padrão
+L.Marker.prototype.options.icon = DefaultIcon;
 
 // Componente para recentralizar o mapa
 const RecenterMap = ({ position }) => {
@@ -31,22 +37,6 @@ const RecenterMap = ({ position }) => {
     }
   }, [position, map]);
   return null;
-};
-
-const CatIcon = L.Icon.extend({
-  options: {
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40]
-  }
-});
-
-const healthIcons = {
-  'Excelente': new CatIcon({ iconUrl: '/assets/icons/cat-excellent.png' }),
-  'Bom': new CatIcon({ iconUrl: '/assets/icons/cat-good.png' }),
-  'Regular': new CatIcon({ iconUrl: '/assets/icons/cat-regular.png' }),
-  'Precisa de atenção': new CatIcon({ iconUrl: '/assets/icons/cat-attention.png' }),
-  'Emergência': new CatIcon({ iconUrl: '/assets/icons/cat-emergency.png' })
 };
 
 const MapPage = () => {
@@ -65,8 +55,6 @@ const MapPage = () => {
     estimatedAge: []
   });
   const [showList, setShowList] = useState(false);
-
-  const mapRef = useRef(null);
 
   useEffect(() => {
     if (userLocation) {
@@ -154,7 +142,76 @@ const MapPage = () => {
   
   return (
     <div className="map-page">
-      {/* Resto do código anterior permanece o mesmo */}
+      <div className="map-controls">
+        <button 
+          className="filter-toggle"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Layers /> Filtros
+        </button>
+        
+        <button 
+          className="list-toggle"
+          onClick={() => setShowList(!showList)}
+        >
+          <List /> Lista
+        </button>
+      </div>
+      
+      {showFilters && (
+        <div className="map-filters">
+          {/* Implementar filtros aqui */}
+        </div>
+      )}
+      
+      <MapContainer 
+        center={mapCenter} 
+        zoom={13} 
+        style={{ height: 'calc(100vh - 60px)', width: '100%' }}
+        scrollWheelZoom={false}
+      >
+        <RecenterMap position={mapCenter} />
+        
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        
+        {cats.map(cat => (
+          <Marker 
+            key={cat._id} 
+            position={[cat.location.coordinates[1], cat.location.coordinates[0]]}
+            eventHandlers={{
+              click: () => handleMarkerClick(cat)
+            }}
+          >
+            <Popup>
+              <CatPopup cat={cat} />
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+      
+      {showList && (
+        <div className="map-cat-list">
+          {cats.map(cat => (
+            <Link 
+              key={cat._id} 
+              to={`/cat/${cat._id}`} 
+              className="cat-list-item"
+            >
+              <img src={cat.photoUrl} alt={cat.name} />
+              <div className="cat-list-details">
+                <h3>{cat.name}</h3>
+                <p>{cat.location.address}</p>
+                <span className={`health-status ${cat.health.toLowerCase().replace(/\s+/g, '-')}`}>
+                  {cat.health}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
