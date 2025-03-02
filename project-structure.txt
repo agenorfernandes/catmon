@@ -1,0 +1,53 @@
+CatMon/
+├── backend/
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── catController.js
+│   │   ├── checkInController.js
+│   │   └── userController.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── upload.js
+│   ├── models/
+│   │   ├── Cat.js
+│   │   ├── CheckIn.js
+│   │   ├── Task.js
+│   │   └── User.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── catRoutes.js
+│   │   ├── checkInRoutes.js
+│   │   └── userRoutes.js
+│   ├── utils/
+│   │   ├── geocoder.js
+│   │   └── pointsCalculator.js
+│   ├── server.js
+│   └── package.json
+├── frontend/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── index.html
+│   │   └── assets/
+│   │       ├── images/
+│   │       └── icons/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Auth/
+│   │   │   ├── Cat/
+│   │   │   ├── CheckIn/
+│   │   │   ├── Map/
+│   │   │   ├── Profile/
+│   │   │   └── Shared/
+│   │   ├── contexts/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── styles/
+│   │   ├── utils/
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── .env
+│   └── package.json
+└── config/
+    ├── db.js
+    ├── default.json
+    └── production.json

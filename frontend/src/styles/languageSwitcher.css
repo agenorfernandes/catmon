@@ -1,0 +1,125 @@
+/* Estilos para o Seletor de Idiomas */
+.language-switcher {
+  position: relative;
+  display: inline-block;
+  margin-right: 15px;
+}
+
+.language-switcher-button {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.language-switcher-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.language-switcher-button span {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 180px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.language-dropdown-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.language-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.language-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.language-item:hover:not(.disabled) {
+  background-color: #f1f5f9;
+}
+
+.language-item.active {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.language-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.language-name {
+  font-size: 14px;
+}
+
+.coming-soon {
+  font-size: 12px;
+  color: #999;
+  padding: 2px 6px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+}
+
+/* Animação de fade */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para dispositivos móveis */
+@media (max-width: 768px) {
+  .language-switcher {
+    margin-right: 8px;
+  }
+  
+  .language-switcher-button {
+    padding: 6px 10px;
+  }
+  
+  .language-switcher-button span {
+    display: none;
+  }
+  
+  .language-dropdown {
+    right: -10px;
+    width: 160px;
+  }
+}

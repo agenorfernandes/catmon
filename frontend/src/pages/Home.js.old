@@ -1,0 +1,217 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { MapPin, Heart, AlertTriangle, Clock, Droplet, Coffee } from 'react-feather';
+import axios from 'axios';
+
+// Contextos
+import { AuthContext } from '../contexts/AuthContext';
+import { LocationContext } from '../contexts/LocationContext';
+
+// Componentes
+import CatCard from '../components/Cat/CatCard';
+import EmergencyCatCard from '../components/Cat/EmergencyCatCard';
+import EmptyState from '../components/Shared/EmptyState';
+import LoadingSpinner from '../components/Shared/LoadingSpinner';
+
+const Home = () => {
+  const { isAuthenticated, user } = useContext(AuthContext);
+  const { userLocation } = useContext(LocationContext);
+  
+  const [nearbyCats, setNearbyCats] = useState([]);
+  const [emergencyCats, setEmergencyCats] = useState([]);
+  const [recentCheckIns, setRecentCheckIns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('nearby');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch data based on active tab
+        if (activeTab === 'nearby' && userLocation) {
+          const response = await axios.get(`/api/cats/nearby`, {
+            params: {
+              lat: userLocation.latitude,
+              lng: userLocation.longitude,
+              radius: 5000 // 5km
+            }
+          });
+          setNearbyCats(response.data);
+        } else if (activeTab === 'emergency') {
+          const response = await axios.get('/api/cats', {
+            params: {
+              health: 'Precisa de atenção,Emergência',
+              status: 'Ativo',
+              sort: '-updatedAt'
+            }
+          });
+          setEmergencyCats(response.data.cats);
+        } else if (activeTab === 'recent' && isAuthenticated) {
+          const response = await axios.get('/api/checkins/user', {
+            headers: {
+              'x-auth-token': localStorage.getItem('token')
+            }
+          });
+          setRecentCheckIns(response.data.checkIns);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeTab, userLocation, isAuthenticated]);
+
+  const renderContent = () => {
+    if (loading) {
+      return <LoadingSpinner />;
+    }
+
+    switch (activeTab) {
+      case 'nearby':
+        return nearbyCats.length > 0 ? (
+          <div className="cat-grid">
+            {nearbyCats.map(cat => (
+              <CatCard key={cat._id} cat={cat} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState 
+            icon={<MapPin size={48} />}
+            title="Nenhum gato próximo"
+            message="Não encontramos gatos registrados perto de você. Que tal adicionar um novo gato que você encontrou?"
+            actionLink="/add-cat"
+            actionText="Adicionar Gato"
+          />
+        );
+      
+      case 'emergency':
+        return emergencyCats.length > 0 ? (
+          <div className="cat-grid">
+            {emergencyCats.map(cat => (
+              <EmergencyCatCard key={cat._id} cat={cat} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState 
+            icon={<AlertTriangle size={48} />}
+            title="Sem emergências"
+            message="Felizmente, não há gatos em emergência no momento!"
+          />
+        );
+      
+      case 'recent':
+        return isAuthenticated ? (
+          recentCheckIns.length > 0 ? (
+            <div className="checkin-list">
+              {recentCheckIns.map(checkIn => (
+                <div key={checkIn._id} className="checkin-card">
+                  <Link to={`/cat/${checkIn.cat._id}`}>
+                    <img src={checkIn.cat.photoUrl} alt={checkIn.cat.name} />
+                    <div className="checkin-info">
+                      <h3>{checkIn.cat.name}</h3>
+                      <p>
+                        <Clock className="icon" /> {new Date(checkIn.createdAt).toLocaleDateString()}
+                      </p>
+                      <div className="checkin-actions">
+                        {checkIn.actions.map((action, index) => {
+                          let icon;
+                          switch (action) {
+                            case 'Alimentou':
+                              icon = <Coffee className="icon" />;
+                              break;
+                            case 'Deu água':
+                              icon = <Droplet className="icon" />;
+                              break;
+                            default:
+                              icon = null;
+                          }
+                          return (
+                            <span key={index} className="action-tag">
+                              {icon} {action}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState 
+              icon={<Clock size={48} />}
+              title="Nenhum check-in recente"
+              message="Você ainda não fez nenhum check-in. Encontre um gato no mapa e ajude-o!"
+              actionLink="/map"
+              actionText="Ver Mapa"
+            />
+          )
+        ) : (
+          <EmptyState 
+            icon={<Heart size={48} />}
+            title="Entre para ajudar"
+            message="Faça login para ver seus check-ins recentes e começar a ajudar gatos próximos a você."
+            actionLink="/login"
+            actionText="Entrar"
+          />
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="home-page">
+      <section className="hero-section">
+        <div className="hero-content">
+          <h1>Bem-vindo ao CatMon</h1>
+          <p>Ajude gatos de rua, ganhe pontos e faça a diferença na sua comunidade!</p>
+          {!isAuthenticated && (
+            <div className="hero-buttons">
+              <Link to="/register" className="btn btn-primary">Registrar</Link>
+              <Link to="/login" className="btn btn-secondary">Entrar</Link>
+            </div>
+          )}
+        </div>
+      </section>
+      
+      <section className="tabs-section">
+        <div className="tabs">
+          <button 
+            className={`tab ${activeTab === 'nearby' ? 'active' : ''}`}
+            onClick={() => setActiveTab('nearby')}
+          >
+            <MapPin className="tab-icon" />
+            Gatos Próximos
+          </button>
+          <button 
+            className={`tab ${activeTab === 'emergency' ? 'active' : ''}`}
+            onClick={() => setActiveTab('emergency')}
+          >
+            <AlertTriangle className="tab-icon" />
+            Emergências
+          </button>
+          <button 
+            className={`tab ${activeTab === 'recent' ? 'active' : ''}`}
+            onClick={() => setActiveTab('recent')}
+          >
+            <Clock className="tab-icon" />
+            Meus Check-ins
+          </button>
+        </div>
+        
+        <div className="tab-content">
+          {renderContent()}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;

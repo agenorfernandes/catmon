@@ -1,0 +1,46 @@
+const express = require('express');
+const router = express.Router();
+const userController = require('../controllers/userController');
+const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
+
+// @route   GET api/users/profile/:id?
+// @desc    Obter perfil do usuário (opcional: ID do usuário ou usuário atual)
+// @access  Private
+router.get('/profile/:id?', auth, userController.getUserProfile);
+
+// @route   PUT api/users/profile
+// @desc    Atualizar perfil do usuário
+// @access  Private
+router.put(
+  '/profile',
+  [auth, upload.single('profilePicture')],
+  userController.updateUserProfile
+);
+
+// @route   GET api/users/favorites
+// @desc    Obter gatos favoritos do usuário
+// @access  Private
+router.get('/favorites', auth, userController.getUserFavorites);
+
+// @route   POST api/users/favorites
+// @desc    Adicionar gato aos favoritos
+// @access  Private
+router.post('/favorites', auth, userController.addToFavorites);
+
+// @route   DELETE api/users/favorites/:catId
+// @desc    Remover gato dos favoritos
+// @access  Private
+router.delete('/favorites/:catId', auth, userController.removeFromFavorites);
+
+// @route   GET api/users/ranking
+// @desc    Obter ranking de usuários
+// @access  Private
+router.get('/ranking', auth, userController.getRanking);
+
+// @route   GET api/users/stats/:id?
+// @desc    Obter estatísticas do usuário (opcional: ID do usuário ou usuário atual)
+// @access  Private
+router.get('/stats/:id?', auth, userController.getUserStats);
+
+module.exports = router;
