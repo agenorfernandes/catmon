@@ -21,4 +21,30 @@ const CatMap = ({ cat }) => {
     );
   }
 
-  // Coordenadas do gato (no MongoDB são arma
+  // Coordenadas do gato (no MongoDB são armazenadas como [longitude, latitude])
+  const [longitude, latitude] = cat.location.coordinates;
+
+  return (
+    <MapContainer 
+      center={[latitude, longitude]} 
+      zoom={15} 
+      style={{ height: '300px', width: '100%' }}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      
+      <Marker position={[latitude, longitude]}>
+        <Popup>
+          <div>
+            <h3>{cat.name}</h3>
+            <p>{cat.location.address}</p>
+          </div>
+        </Popup>
+      </Marker>
+    </MapContainer>
+  );
+};
+
+export default CatMap;
