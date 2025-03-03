@@ -3,14 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, AlertCircle } from 'react-feather';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-// Contextos
 import { AuthContext } from '../contexts/AuthContext';
-
-// Componentes
 import SocialLogin from '../components/Auth/SocialLogin';
-
-// Estilos
+import googleIcon from '../assets/icons/google.svg';
+import appleIcon from '../assets/icons/apple.svg';
+import katmonLogo from '../assets/Logo_Katmon-removebg-preview.svg';
 import './Login.css';
 
 const Login = () => {
@@ -95,7 +92,7 @@ const Login = () => {
         <div className="login-header">
           <div className="logo-container">
             <div className="logo-circle">
-              <span>K</span>
+              <img src={katmonLogo} alt="KatMon Logo" className="login-logo" />
             </div>
           </div>
           <h1>Entrar no KatMon</h1>
@@ -104,12 +101,12 @@ const Login = () => {
         
         <div className="social-buttons">
           <button className="google-login-btn">
-            <img src="/assets/icons/google.svg" alt="Google" className="social-icon" />
+            <img src={googleIcon} alt="Google" className="social-icon" />
             <span>Fazer login com o Google</span>
           </button>
           
           <button className="apple-login-btn">
-            <img src="/assets/icons/apple.svg" alt="Apple" className="social-icon" />
+            <img src={appleIcon} alt="Apple" className="social-icon" />
             <span>Entrar com Apple</span>
           </button>
         </div>

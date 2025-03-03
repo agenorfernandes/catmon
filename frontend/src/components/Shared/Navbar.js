@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import katmonLogo from '../../assets/Logo_Katmon-removebg-preview.png';
+import './NavBar.css';
 
 const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-bold text-xl">K</span>
+          <div className="logo-wrapper">
+            <img src={katmonLogo} alt="KatMon" className="navbar-logo-image" />
           </div>
-          <span>KatMon</span>
+          <span className="navbar-brand-text">KatMon</span>
         </Link>
       </div>
     </nav>
