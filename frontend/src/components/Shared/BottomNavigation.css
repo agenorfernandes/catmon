@@ -1,0 +1,64 @@
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    padding: 8px 0;
+    z-index: 1000; /* Aumentei o z-index para garantir que fique acima de outros elementos */
+    height: 60px;
+  }
+  
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #666;
+    width: 20%;
+    transition: color 0.2s;
+  }
+  
+  .bottom-nav-item.active {
+    color: #4A66E2;
+  }
+  
+  .bottom-nav-icon {
+    margin-bottom: 4px;
+  }
+  
+  .add-button {
+    margin-top: -30px;
+  }
+  
+  .add-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4A66E2;
+    color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 2px 8px rgba(74, 102, 226, 0.5);
+  }
+  
+  .bottom-nav-item span {
+    font-size: 12px;
+  }
+  
+  /* Esconde o texto no botão de adicionar */
+  .add-button span {
+    display: none;
+  }
+  
+  @media (max-width: 360px) {
+    .bottom-nav-item span {
+      font-size: 10px;
+    }
+  }

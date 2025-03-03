@@ -4,6 +4,8 @@ import { ToastContainer } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import 'react-toastify/dist/ReactToastify.css';
 import './i18n'; // Importar configuração de i18n
+import './styles/index.css';
+import './styles/home.css'; // Agora o arquivo existe e pode ser importado
 
 // Contextos
 import { AuthProvider } from './contexts/AuthContext';
@@ -26,6 +28,7 @@ import AddCat from './pages/AddCat';
 import CheckIn from './pages/CheckIn';
 import Ranking from './pages/Ranking';
 import Settings from './pages/Settings';
+import Notifications from './pages/Notifications';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -36,7 +39,7 @@ function App() {
     // Simular carregamento inicial
     setTimeout(() => {
       setLoading(false);
-    }, 1500);
+    }, 1000);
     
     // Atualizar título da página com base no idioma
     document.title = t('app.name');
@@ -62,7 +65,14 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 
-                {/* Rotas privadas */}
+                {/* Rota de notificações */}
+                <Route path="/notifications" element={
+                  <PrivateRoute>
+                    <Notifications />
+                  </PrivateRoute>
+                } />
+                
+                {/* Outras rotas privadas */}
                 <Route path="/profile" element={
                   <PrivateRoute>
                     <UserProfile />

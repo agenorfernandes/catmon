@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Search, List, Layers, Plus, Menu } from 'react-feather';
 import axios from 'axios';
+import './Map.css'; // Certifique-se de que este arquivo existe
 
 // Contextos
 import { AuthContext } from '../contexts/AuthContext';
@@ -164,33 +165,35 @@ const MapPage = () => {
         </div>
       )}
       
-      <MapContainer 
-        center={mapCenter} 
-        zoom={13} 
-        style={{ height: 'calc(100vh - 60px)', width: '100%' }}
-        scrollWheelZoom={false}
-      >
-        <RecenterMap position={mapCenter} />
-        
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        
-        {cats.map(cat => (
-          <Marker 
-            key={cat._id} 
-            position={[cat.location.coordinates[1], cat.location.coordinates[0]]}
-            eventHandlers={{
-              click: () => handleMarkerClick(cat)
-            }}
-          >
-            <Popup>
-              <CatPopup cat={cat} />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div className="map-container">
+        <MapContainer 
+          center={mapCenter} 
+          zoom={13} 
+          style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={false}
+        >
+          <RecenterMap position={mapCenter} />
+          
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          
+          {cats.map(cat => (
+            <Marker 
+              key={cat._id} 
+              position={[cat.location.coordinates[1], cat.location.coordinates[0]]}
+              eventHandlers={{
+                click: () => handleMarkerClick(cat)
+              }}
+            >
+              <Popup>
+                <CatPopup cat={cat} />
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
       
       {showList && (
         <div className="map-cat-list">

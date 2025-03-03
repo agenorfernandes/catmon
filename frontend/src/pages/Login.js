@@ -10,6 +10,9 @@ import { AuthContext } from '../contexts/AuthContext';
 // Componentes
 import SocialLogin from '../components/Auth/SocialLogin';
 
+// Estilos
+import './Login.css';
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,23 +90,38 @@ const Login = () => {
   };
   
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-header">
-          <h1>Entrar no CatMon</h1>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <div className="logo-container">
+            <div className="logo-circle">
+              <span>K</span>
+            </div>
+          </div>
+          <h1>Entrar no KatMon</h1>
           <p>Ajude gatos de rua e ganhe pontos!</p>
         </div>
         
-        <SocialLogin />
+        <div className="social-buttons">
+          <button className="google-login-btn">
+            <img src="/assets/icons/google.svg" alt="Google" className="social-icon" />
+            <span>Fazer login com o Google</span>
+          </button>
+          
+          <button className="apple-login-btn">
+            <img src="/assets/icons/apple.svg" alt="Apple" className="social-icon" />
+            <span>Entrar com Apple</span>
+          </button>
+        </div>
         
         <div className="divider">
           <span>ou</span>
         </div>
         
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-field">
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
             <label htmlFor="email">Email</label>
-            <div className="input-group">
+            <div className="input-wrapper">
               <Mail className="input-icon" />
               <input
                 type="email"
@@ -117,15 +135,18 @@ const Login = () => {
             </div>
             {errors.email && (
               <div className="error-message">
-                <AlertCircle className="error-icon" />
+                <AlertCircle size={16} className="error-icon" />
                 {errors.email}
               </div>
             )}
           </div>
           
-          <div className="form-field">
-            <label htmlFor="password">Senha</label>
-            <div className="input-group">
+          <div className="form-group">
+            <div className="label-forgot">
+              <label htmlFor="password">Senha</label>
+              <Link to="/forgot-password" className="forgot-link">Esqueceu a senha?</Link>
+            </div>
+            <div className="input-wrapper">
               <Lock className="input-icon" />
               <input
                 type="password"
@@ -139,28 +160,25 @@ const Login = () => {
             </div>
             {errors.password && (
               <div className="error-message">
-                <AlertCircle className="error-icon" />
+                <AlertCircle size={16} className="error-icon" />
                 {errors.password}
               </div>
             )}
           </div>
           
-          <div className="forgot-password">
-            <Link to="/forgot-password">Esqueceu a senha?</Link>
-          </div>
-          
           <button 
             type="submit" 
-            className="auth-btn"
+            className="login-btn"
             disabled={loading}
           >
-            {loading ? 'Entrando...' : 'Entrar'} <ArrowRight className="btn-icon" />
+            {loading ? 'Entrando...' : 'Entrar'}
+            <ArrowRight size={20} />
           </button>
         </form>
         
-        <div className="auth-footer">
+        <div className="login-footer">
           <p>
-            Não tem uma conta? <Link to="/register">Cadastre-se</Link>
+            Não tem uma conta? <Link to="/register" className="register-link">Cadastre-se</Link>
           </p>
         </div>
       </div>

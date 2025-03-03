@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import axios from 'axios'; // Adicionado import do axios
 import { 
   Settings as SettingsIcon, 
   Bell, 
@@ -208,4 +209,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;            
+export default Settings;

@@ -9,7 +9,8 @@ import {
   CheckCircle, 
   Edit, 
   MapPin, 
-  TrendingUp 
+  TrendingUp,
+  Camera // Adicionado import do ícone Camera
 } from 'react-feather';
 import { toast } from 'react-toastify';
 

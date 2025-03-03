@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Heart, AlertTriangle, Clock, Droplet, Coffee } from 'react-feather';
 import { useTranslation } from 'react-i18next';
+import { MapPin, AlertTriangle, Clock, Heart } from 'react-feather';  // Adicionei o import do Heart
 import axios from 'axios';
-import '../styles/buttons.css';
 
 // Contextos
 import { AuthContext } from '../contexts/AuthContext';
@@ -69,153 +68,125 @@ const Home = () => {
     fetchData();
   }, [activeTab, userLocation, isAuthenticated]);
 
-  const renderContent = () => {
-    if (loading) {
-      return <LoadingSpinner />;
-    }
-
-    switch (activeTab) {
-      case 'nearby':
-        return nearbyCats.length > 0 ? (
-          <div className="cat-grid">
-            {nearbyCats.map(cat => (
-              <CatCard key={cat._id} cat={cat} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState 
-            icon={<MapPin size={48} />}
-            title={t('home.noNearbyCats')}
-            message={t('home.noNearbyCatsMsg')}
-            actionLink="/add-cat"
-            actionText={t('home.addCat')}
-          />
-        );
-      
-      case 'emergency':
-        return emergencyCats.length > 0 ? (
-          <div className="cat-grid">
-            {emergencyCats.map(cat => (
-              <EmergencyCatCard key={cat._id} cat={cat} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState 
-            icon={<AlertTriangle size={48} />}
-            title={t('home.noEmergencies')}
-            message={t('home.noEmergenciesMsg')}
-          />
-        );
-      
-      case 'recent':
-        return isAuthenticated ? (
-          recentCheckIns.length > 0 ? (
-            <div className="checkin-list">
-              {recentCheckIns.map(checkIn => (
-                <div key={checkIn._id} className="checkin-card">
-                  <Link to={`/cat/${checkIn.cat._id}`}>
-                    <img src={checkIn.cat.photoUrl} alt={checkIn.cat.name} />
-                    <div className="checkin-info">
-                      <h3>{checkIn.cat.name}</h3>
-                      <p>
-                        <Clock className="icon" /> {new Date(checkIn.createdAt).toLocaleDateString()}
-                      </p>
-                      <div className="checkin-actions">
-                        {checkIn.actions.map((action, index) => {
-                          let icon;
-                          switch (action) {
-                            case 'Alimentou':
-                              icon = <Coffee className="icon" />;
-                              break;
-                            case 'Deu água':
-                              icon = <Droplet className="icon" />;
-                              break;
-                            default:
-                              icon = null;
-                          }
-                          return (
-                            <span key={index} className="action-tag">
-                              {icon} {action}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState 
-              icon={<Clock size={48} />}
-              title={t('home.noCheckIns')}
-              message={t('home.noCheckInsMsg')}
-              actionLink="/map"
-              actionText={t('home.viewMap')}
-            />
-          )
-        ) : (
-          <EmptyState 
-            icon={<Heart size={48} />}
-            title={t('home.loginToHelp')}
-            message={t('home.loginToHelpMsg')}
-            actionLink="/login"
-            actionText={t('auth.login')}
-          />
-        );
-      
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="home-page">
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1>{t('home.welcome')}</h1>
-          <p>{t('app.slogan')}</p>
-          
-          <div className="hero-actions">
-            {!isAuthenticated && (
-              <div className="hero-buttons">
-                <Link to="/register" className="btn btn-primary">{t('auth.register')}</Link>
-                <Link to="/login" className="btn btn-secondary">{t('auth.login')}</Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <div className="welcome-banner">
+        <h1>{t('home.welcome')}</h1>
+        <p>{t('app.slogan')}</p>
+      </div>
       
-      <section className="tabs-section">
-        <div className="tabs">
+      <div className="tabs-section">
+        <div className="tab-buttons">
           <button 
-            className={`tab ${activeTab === 'nearby' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'nearby' ? 'active' : ''}`}
             onClick={() => setActiveTab('nearby')}
           >
-            <MapPin className="tab-icon" />
-            {t('home.nearbyCats')}
+            <MapPin size={20} />
+            <span>{t('home.nearbyCats')}</span>
           </button>
           <button 
-            className={`tab ${activeTab === 'emergency' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'emergency' ? 'active' : ''}`}
             onClick={() => setActiveTab('emergency')}
           >
-            <AlertTriangle className="tab-icon" />
-            {t('home.emergencies')}
+            <AlertTriangle size={20} />
+            <span>{t('home.emergencies')}</span>
           </button>
           <button 
-            className={`tab ${activeTab === 'recent' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'recent' ? 'active' : ''}`}
             onClick={() => setActiveTab('recent')}
           >
-            <Clock className="tab-icon" />
-            {t('home.myCheckIns')}
+            <Clock size={20} />
+            <span>{t('home.myCheckIns')}</span>
           </button>
         </div>
         
         <div className="tab-content">
-          {renderContent()}
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              {activeTab === 'nearby' && (
+                nearbyCats.length > 0 ? (
+                  <div className="cat-grid">
+                    {nearbyCats.map(cat => (
+                      <CatCard key={cat._id} cat={cat} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState 
+                    icon={<MapPin size={48} />}
+                    title={t('home.noNearbyCats')}
+                    message={t('home.noNearbyCatsMsg')}
+                    actionLink="/add-cat"
+                    actionText={t('home.addCat')}
+                  />
+                )
+              )}
+              
+              {activeTab === 'emergency' && (
+                emergencyCats.length > 0 ? (
+                  <div className="cat-grid">
+                    {emergencyCats.map(cat => (
+                      <EmergencyCatCard key={cat._id} cat={cat} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState 
+                    icon={<AlertTriangle size={48} />}
+                    title={t('home.noEmergencies')}
+                    message={t('home.noEmergenciesMsg')}
+                  />
+                )
+              )}
+              
+              {activeTab === 'recent' && (
+                isAuthenticated ? (
+                  recentCheckIns.length > 0 ? (
+                    <div className="checkin-list">
+                      {recentCheckIns.map(checkIn => (
+                        <div key={checkIn._id} className="checkin-card">
+                          <Link to={`/cat/${checkIn.cat._id}`}>
+                            <img src={checkIn.cat.photoUrl} alt={checkIn.cat.name} />
+                            <div className="checkin-info">
+                              <h3>{checkIn.cat.name}</h3>
+                              <p>
+                                <Clock className="icon" /> {new Date(checkIn.createdAt).toLocaleDateString()}
+                              </p>
+                              <div className="checkin-actions">
+                                {checkIn.actions.map((action, index) => (
+                                  <span key={index} className="action-tag">
+                                    {action}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState 
+                      icon={<Clock size={48} />}
+                      title={t('home.noCheckIns')}
+                      message={t('home.noCheckInsMsg')}
+                      actionLink="/map"
+                      actionText={t('home.viewMap')}
+                    />
+                  )
+                ) : (
+                  <EmptyState 
+                    icon={<Heart size={48} />}
+                    title={t('home.loginToHelp')}
+                    message={t('home.loginToHelpMsg')}
+                    actionLink="/login"
+                    actionText={t('auth.login')}
+                  />
+                )
+              )}
+            </>
+          )}
         </div>
-      </section>
+      </div>
     </div>
   );
 };
