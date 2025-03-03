@@ -17,13 +17,13 @@ const storage = multer.diskStorage({
     
     // Definir pasta de destino com base no tipo de upload
     if (file.fieldname === 'profilePicture') {
-      uploadPath = path.join(__dirname, '../uploads/profiles');
+      uploadPath = path.join(__dirname, '../../uploads/profiles');
     } else if (file.fieldname === 'photo' || file.fieldname === 'additionalPhotos') {
-      uploadPath = path.join(__dirname, '../uploads/cats');
+      uploadPath = path.join(__dirname, '../../uploads/cats');
     } else if (file.fieldname === 'photos') {
-      uploadPath = path.join(__dirname, '../uploads/checkins');
+      uploadPath = path.join(__dirname, '../../uploads/checkins');
     } else {
-      uploadPath = path.join(__dirname, '../uploads/others');
+      uploadPath = path.join(__dirname, '../../uploads/others');
     }
     
     // Criar diretório se não existir
@@ -40,6 +40,8 @@ const storage = multer.diskStorage({
 
 // Filtro de arquivo (apenas imagens)
 const fileFilter = (req, file, cb) => {
+  console.log('Processando arquivo:', file.fieldname, file.originalname, file.mimetype);
+  
   // Permitir apenas imagens
   const allowedMimes = [
     'image/jpeg',
@@ -51,6 +53,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
+    console.log('Arquivo rejeitado - tipo não permitido:', file.mimetype);
     cb(new Error('Formato de arquivo inválido. Apenas JPEG, PNG e GIF são permitidos.'));
   }
 };
@@ -64,4 +67,25 @@ const upload = multer({
   }
 });
 
-module.exports = upload;
+// Middleware para lidar com erros do multer
+const handleMulterErrors = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    console.error('Erro do Multer:', err);
+    return res.status(400).json({
+      msg: 'Erro ao fazer upload de arquivos',
+      error: err.message
+    });
+  } else if (err) {
+    console.error('Erro no Upload:', err);
+    return res.status(400).json({
+      msg: 'Erro no upload',
+      error: err.message
+    });
+  }
+  next();
+};
+
+module.exports = { 
+  upload,
+  handleMulterErrors
+};
