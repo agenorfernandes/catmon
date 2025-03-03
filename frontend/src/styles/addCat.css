@@ -1,0 +1,179 @@
+/* Fonte moderna */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f6f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.add-cat-page {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #4A56E2;
+    margin-left: 15px;
+    font-size: 24px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.form-section {
+    margin-bottom: 25px;
+}
+
+.form-section h2 {
+    color: #333;
+    border-bottom: 2px solid #4A56E2;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.form-field {
+    margin-bottom: 15px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 90%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: #4A56E2;
+    box-shadow: 0 0 0 3px rgba(74, 86, 226, 0.1);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-field {
+    flex: 1;
+}
+
+.photo-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.photo-upload-label:hover {
+    background-color: #f9f9f9;
+    border-color: #4A56E2;
+}
+
+.photo-upload-label input[type="file"] {
+    display: none;
+}
+
+.trait-options,
+.need-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.trait-option,
+.need-option {
+    display: flex;
+    align-items: center;
+    background-color: #f4f6f9;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.trait-option input,
+.need-option input {
+    margin-right: 8px;
+}
+
+.trait-option:hover,
+.need-option:hover {
+    background-color: #e6eaf5;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: #4A56E2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.submit-btn:hover {
+    background-color: #3A45B3;
+}
+
+.submit-btn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .add-cat-page {
+        padding: 20px;
+    }
+}

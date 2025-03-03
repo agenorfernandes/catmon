@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload, handleMulterErrors } = require('../middleware/upload');
 
 // @route   GET api/users/profile/:id?
 // @desc    Obter perfil do usuário (opcional: ID do usuário ou usuário atual)
@@ -14,7 +14,11 @@ router.get('/profile/:id?', auth, userController.getUserProfile);
 // @access  Private
 router.put(
   '/profile',
-  [auth, upload.single('profilePicture')],
+  [
+    auth, 
+    upload.single('profilePicture'),
+    handleMulterErrors
+  ],
   userController.updateUserProfile
 );
 

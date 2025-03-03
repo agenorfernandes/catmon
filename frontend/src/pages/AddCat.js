@@ -14,6 +14,8 @@ import {
 // Contextos
 import { LocationContext } from '../contexts/LocationContext';
 import { AuthContext } from '../contexts/AuthContext';
+import '../styles/addCat.css';
+
 
 const AddCat = () => {
   const { t } = useTranslation();
