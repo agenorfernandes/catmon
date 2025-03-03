@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './i18n'; // Importar configuração de i18n
 import './styles/index.css';
 import './styles/home.css'; // Agora o arquivo existe e pode ser importado
+import './styles/catProfile.css';
 
 // Contextos
 import { AuthProvider } from './contexts/AuthContext';

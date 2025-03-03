@@ -49,4 +49,9 @@ router.get('/me', auth, authController.getMe);
 // @access  Public
 router.get('/verify', authController.verifyToken);
 
+// @route   PUT api/auth/avatar
+// @desc    Atualizar avatar do usuário
+// @access  Private
+router.put('/avatar', auth, authController.updateAvatar);
+
 module.exports = router;

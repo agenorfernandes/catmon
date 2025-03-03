@@ -1,0 +1,354 @@
+/* Estilos para a página de perfil do usuário */
+.user-profile-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    margin-bottom: 32px;
+    background-color: #f8f9fb;
+    border-radius: 16px;
+    text-align: center;
+  }
+  
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 16px;
+    border: 4px solid #4A66E2;
+    box-shadow: 0 4px 12px rgba(74, 102, 226, 0.2);
+  }
+  
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .profile-info {
+    width: 100%;
+  }
+  
+  .profile-info h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4A66E2;
+    margin-bottom: 8px;
+  }
+  
+  .profile-info p {
+    color: #666;
+    margin-bottom: 16px;
+  }
+  
+  .edit-profile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4A66E2;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0 auto;
+    gap: 8px;
+  }
+  
+  .edit-profile-btn:hover {
+    background-color: #f8f9fb;
+  }
+  
+  .profile-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .stat-card {
+    flex: 1;
+    min-width: 150px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .stat-card svg {
+    color: #4A66E2;
+    margin-right: 16px;
+  }
+  
+  .stat-details h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  
+  .stat-details p {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .profile-sections {
+    margin-bottom: 32px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #EEF0FF;
+    padding-bottom: 8px;
+  }
+  
+  .section-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .section-header a {
+    font-size: 14px;
+    color: #4A66E2;
+    text-decoration: none;
+  }
+  
+  .edit-profile-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .edit-profile-form input,
+  .edit-profile-form textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+  }
+  
+  .edit-profile-form input:focus,
+  .edit-profile-form textarea:focus {
+    border-color: #4A66E2;
+    outline: none;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-primary {
+    background-color: #4A66E2;
+    color: white;
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background-color: #3952C4;
+  }
+  
+  .btn-secondary {
+    background-color: white;
+    color: #333;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #f8f9fb;
+  }
+  
+  .avatar-edit {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  
+  .avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: white;
+  }
+  
+  .avatar-edit:hover .avatar-overlay {
+    opacity: 1;
+  }
+  
+  .achievements-grid,
+  .favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .achievement-item,
+  .favorite-cat-card {
+    background-color: #f8f9fb;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .achievement-item img,
+  .favorite-cat-card img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  
+  .achievement-details h4,
+  .cat-details h4 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .achievement-details p,
+  .cat-details p {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .checkins-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .checkin-item {
+    background-color: #f8f9fb;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .checkin-item img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  
+  .checkin-details h4 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .checkin-details p {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .checkin-details span {
+    font-size: 12px;
+    color: #999;
+  }
+  
+  .empty-achievements,
+  .empty-favorites,
+  .empty-checkins {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: #f8f9fb;
+    border-radius: 12px;
+  }
+  
+  .empty-achievements p,
+  .empty-favorites p,
+  .empty-checkins p {
+    color: #666;
+    margin-bottom: 16px;
+  }
+  
+  /* Responsividade */
+  @media (min-width: 768px) {
+    .profile-header {
+      flex-direction: row;
+      text-align: left;
+    }
+    
+    .profile-avatar {
+      margin-right: 24px;
+      margin-bottom: 0;
+    }
+    
+    .profile-info {
+      flex: 1;
+    }
+    
+    .edit-profile-btn {
+      margin: 0;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .profile-stats {
+      flex-direction: column;
+    }
+    
+    .stat-card {
+      width: 100%;
+    }
+    
+    .achievements-grid,
+    .favorites-grid {
+      grid-template-columns: 1fr;
+    }
+  }

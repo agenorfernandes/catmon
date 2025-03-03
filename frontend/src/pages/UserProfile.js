@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  User, 
   Award, 
   Star, 
   CheckCircle, 
   Edit, 
   MapPin, 
   TrendingUp,
-  Camera // Adicionado import do ícone Camera
+  Camera 
 } from 'react-feather';
 import { toast } from 'react-toastify';
 
@@ -19,15 +17,19 @@ import { AuthContext } from '../contexts/AuthContext';
 
 // Componentes
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
+import AvatarSelector from '../components/Profile/AvatarSelector';
+
+// Estilos
+import '../styles/userProfile.css';
 
 const UserProfile = () => {
-  const { t } = useTranslation();
   const { user, updateUser } = useContext(AuthContext);
   
   const [profileData, setProfileData] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -111,6 +113,30 @@ const UserProfile = () => {
       toast.error('Erro ao atualizar perfil');
     }
   };
+  
+  const handleSelectAvatar = async (avatar) => {
+    try {
+      // Atualizar o avatar do usuário
+      const response = await axios.put('/api/users/profile/avatar', {
+        avatarId: avatar.id
+      });
+      
+      // Atualizar contexto de autenticação
+      updateUser(response.data);
+      
+      // Atualizar formulário
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: avatar.url
+      }));
+      
+      setShowAvatarSelector(false);
+      toast.success('Avatar atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar avatar:', error);
+      toast.error('Erro ao atualizar avatar');
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -122,28 +148,21 @@ const UserProfile = () => {
         <div className="profile-avatar">
           {editMode ? (
             <div className="avatar-edit">
-              <label htmlFor="profilePicture">
-                <img 
-                  src={
-                    formData.profilePicture instanceof File 
-                      ? URL.createObjectURL(formData.profilePicture)
-                      : formData.profilePicture
-                  } 
-                  alt={user.name} 
-                />
-                <div className="avatar-overlay">
-                  <Camera />
-                  <span>Alterar foto</span>
-                </div>
-                <input
-                  type="file"
-                  id="profilePicture"
-                  name="profilePicture"
-                  accept="image/*"
-                  onChange={handleChange}
-                  style={{ display: 'none' }}
-                />
-              </label>
+              <img 
+                src={
+                  formData.profilePicture instanceof File 
+                    ? URL.createObjectURL(formData.profilePicture)
+                    : formData.profilePicture
+                } 
+                alt={user.name} 
+              />
+              <div 
+                className="avatar-overlay"
+                onClick={() => setShowAvatarSelector(true)}
+              >
+                <Camera size={24} />
+                <span>Alterar foto</span>
+              </div>
             </div>
           ) : (
             <img 
@@ -196,7 +215,7 @@ const UserProfile = () => {
                 className="edit-profile-btn"
                 onClick={() => setEditMode(true)}
               >
-                <Edit /> Editar Perfil
+                <Edit size={16} /> Editar Perfil
               </button>
             </>
           )}
@@ -205,7 +224,7 @@ const UserProfile = () => {
       
       <div className="profile-stats">
         <div className="stat-card">
-          <Award />
+          <Award size={24} />
           <div className="stat-details">
             <h3>{user.level}</h3>
             <p>Nível</p>
@@ -213,7 +232,7 @@ const UserProfile = () => {
         </div>
         
         <div className="stat-card">
-          <TrendingUp />
+          <Star size={24} />
           <div className="stat-details">
             <h3>{user.points}</h3>
             <p>Pontos</p>
@@ -221,7 +240,7 @@ const UserProfile = () => {
         </div>
         
         <div className="stat-card">
-          <CheckCircle />
+          <CheckCircle size={24} />
           <div className="stat-details">
             <h3>{stats?.totalCheckIns || 0}</h3>
             <p>Check-ins</p>
@@ -326,6 +345,14 @@ const UserProfile = () => {
           </div>
         )}
       </section>
+      
+      {/* Modal para seleção de avatar */}
+      {showAvatarSelector && (
+        <AvatarSelector 
+          onSelectAvatar={handleSelectAvatar}
+          onClose={() => setShowAvatarSelector(false)}
+        />
+      )}
     </div>
   );
 };

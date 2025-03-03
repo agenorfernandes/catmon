@@ -16,12 +16,18 @@ exports.register = async (req, res) => {
       return res.status(400).json({ msg: 'Usuário já existe' });
     }
 
+    // Selecionar um avatar aleatório
+    const avatarId = Math.floor(Math.random() * 10) + 1; // Assumindo 10 avatares
+    const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+
     // Criar novo usuário
     user = new User({
       name,
       email,
       password,
-      authMethod: 'local'
+      authMethod: 'local',
+      avatarId,
+      profilePicture
     });
 
     await user.save();
@@ -108,20 +114,32 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
     
     if (!user) {
+      // Selecionar um avatar aleatório
+      const avatarId = Math.floor(Math.random() * 10) + 1;
+      const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+      
       // Criar novo usuário
       user = new User({
         name,
         email,
         authMethod: 'google',
         googleId: ticket.getUserId(),
-        profilePicture: picture || 'default-avatar.png'
+        avatarId,
+        profilePicture: picture || profilePicture
       });
       
       await user.save();
     } else {
       // Atualizar usuário existente com informações do Google
       user.googleId = ticket.getUserId();
-      if (picture) user.profilePicture = picture;
+      
+      // Atualizar avatar somente se usuário não tiver escolhido um personalizado
+      if (!user.avatarId) {
+        const avatarId = Math.floor(Math.random() * 10) + 1;
+        user.avatarId = avatarId;
+        user.profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+      }
+      
       user.lastLogin = Date.now();
       await user.save();
     }
@@ -166,18 +184,32 @@ exports.appleLogin = async (req, res) => {
     let user = await User.findOne({ email });
     
     if (!user) {
+      // Selecionar um avatar aleatório
+      const avatarId = Math.floor(Math.random() * 10) + 1;
+      const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+      
       // Criar novo usuário
       user = new User({
         name: firstName && lastName ? `${firstName} ${lastName}` : 'Usuário Apple',
         email,
         authMethod: 'apple',
-        appleId
+        appleId,
+        avatarId,
+        profilePicture
       });
       
       await user.save();
     } else {
       // Atualizar usuário existente com informações da Apple
       user.appleId = appleId;
+      
+      // Atualizar avatar somente se usuário não tiver escolhido um personalizado
+      if (!user.avatarId) {
+        const avatarId = Math.floor(Math.random() * 10) + 1;
+        user.avatarId = avatarId;
+        user.profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+      }
+      
       user.lastLogin = Date.now();
       await user.save();
     }
@@ -232,5 +264,39 @@ exports.verifyToken = (req, res) => {
     res.json({ valid: true });
   } catch (err) {
     res.status(401).json({ valid: false });
+  }
+};
+
+// Atualizar avatar do usuário
+exports.updateAvatar = async (req, res) => {
+  try {
+    const { avatarId } = req.body;
+    
+    if (!avatarId || avatarId < 1 || avatarId > 10) {
+      return res.status(400).json({ msg: 'ID de avatar inválido' });
+    }
+    
+    const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+    
+    // Atualizar avatar do usuário
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { 
+        $set: { 
+          profilePicture,
+          avatarId
+        } 
+      },
+      { new: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'Usuário não encontrado' });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Erro no servidor' });
   }
 };

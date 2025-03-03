@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Heart, Calendar, Info, User, Clock, AlertTriangle, Edit, Trash, Check } from 'react-feather';
+import { MapPin, Heart, Calendar, Info, User, Clock, Check } from 'react-feather';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
-// Contextos
 import { AuthContext } from '../contexts/AuthContext';
-
-// Componentes
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
-import CheckInItem from '../components/CheckIn/CheckInItem';
 import CatMap from '../components/Map/CatMap';
+import '../styles/catProfile.css';
 
 const CatProfile = () => {
   const { id } = useParams();
@@ -21,7 +17,6 @@ const CatProfile = () => {
   const [recentCheckIns, setRecentCheckIns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   useEffect(() => {
     const fetchCat = async () => {
@@ -42,25 +37,19 @@ const CatProfile = () => {
   }, [id, navigate]);
   
   useEffect(() => {
-    // Verificar se o gato está nos favoritos do usuário
-    const checkFavorite = async () => {
-      if (isAuthenticated && cat) {
+    if (isAuthenticated && cat) {
+      const checkFavorite = async () => {
         try {
-          const response = await axios.get('/api/users/favorites', {
-            headers: {
-              'x-auth-token': localStorage.getItem('token')
-            }
-          });
-          
+          const response = await axios.get('/api/users/favorites');
           const isFav = response.data.some(favCat => favCat._id === cat._id);
           setIsFavorite(isFav);
         } catch (error) {
           console.error('Erro ao verificar favoritos:', error);
         }
-      }
-    };
-    
-    checkFavorite();
+      };
+      
+      checkFavorite();
+    }
   }, [isAuthenticated, cat]);
   
   const toggleFavorite = async () => {
@@ -71,47 +60,17 @@ const CatProfile = () => {
     
     try {
       if (isFavorite) {
-        // Remover dos favoritos
-        await axios.delete(`/api/users/favorites/${cat._id}`, {
-          headers: {
-            'x-auth-token': localStorage.getItem('token')
-          }
-        });
+        await axios.delete(`/api/users/favorites/${cat._id}`);
         setIsFavorite(false);
         toast.success('Removido dos favoritos');
       } else {
-        // Adicionar aos favoritos
-        await axios.post('/api/users/favorites', 
-          { catId: cat._id },
-          {
-            headers: {
-              'x-auth-token': localStorage.getItem('token')
-            }
-          }
-        );
+        await axios.post('/api/users/favorites', { catId: cat._id });
         setIsFavorite(true);
         toast.success('Adicionado aos favoritos');
       }
     } catch (error) {
       console.error('Erro ao gerenciar favorito:', error);
       toast.error('Erro ao gerenciar favorito');
-    }
-  };
-  
-  const handleDelete = async () => {
-    try {
-      await axios.delete(`/api/cats/${id}`, {
-        headers: {
-          'x-auth-token': localStorage.getItem('token')
-        }
-      });
-      
-      toast.success('Gato removido com sucesso');
-      navigate('/');
-    } catch (error) {
-      console.error('Erro ao excluir gato:', error);
-      toast.error('Erro ao excluir gato');
-      setShowDeleteModal(false);
     }
   };
   
@@ -123,22 +82,37 @@ const CatProfile = () => {
     return null;
   }
   
-  // Verificar se o usuário logado é o descobridor deste gato
-  const isDiscoverer = isAuthenticated && user?._id === cat.discoveredBy._id;
-  
   return (
     <div className="cat-profile-page">
       <div className="cat-header">
-        <div className="cat-images">
-          <img src={cat.photoUrl} alt={cat.name} className="main-image" />
+        <h1 className="cat-name">{cat.name}</h1>
+        
+        <div className="health-status-badge">
+          <span className={`health-status ${cat.health.toLowerCase().replace(/\s+/g, '-')}`}>
+            {cat.health}
+          </span>
+        </div>
+        
+        <div className="cat-info">
+          <div className="info-item">
+            <MapPin className="icon" />
+            <span>{cat.location.address}</span>
+          </div>
           
-          {cat.additionalPhotos?.length > 0 && (
-            <div className="additional-images">
-              {cat.additionalPhotos.map((photo, index) => (
-                <img key={index} src={photo} alt={`${cat.name} - foto ${index + 2}`} />
-              ))}
-            </div>
-          )}
+          <div className="info-item">
+            <User className="icon" />
+            <span>Registrado por {cat.discoveredBy.name}</span>
+          </div>
+          
+          <div className="info-item">
+            <Calendar className="icon" />
+            <span>Registrado em {new Date(cat.createdAt).toLocaleDateString()}</span>
+          </div>
+          
+          <div className="info-item">
+            <Clock className="icon" />
+            <span>Último check-in: {new Date(cat.lastCheckIn).toLocaleDateString()}</span>
+          </div>
         </div>
         
         <div className="cat-actions">
@@ -152,62 +126,18 @@ const CatProfile = () => {
           
           <Link to={`/checkin/${cat._id}`} className="action-btn checkin-btn">
             <Check />
-            Check-in
+            Fazer Check-in
           </Link>
-          
-          {isDiscoverer && (
-            <>
-              <Link to={`/edit-cat/${cat._id}`} className="action-btn edit-btn">
-                <Edit />
-                Editar
-              </Link>
-              
-              <button 
-                className="action-btn delete-btn"
-                onClick={() => setShowDeleteModal(true)}
-              >
-                <Trash />
-                Excluir
-              </button>
-            </>
-          )}
         </div>
       </div>
       
-      <div className="cat-info-section">
-        <div className="cat-main-info">
-          <h1>{cat.name}</h1>
-          
-          <div className={`health-status ${cat.health.toLowerCase().replace(/\s+/g, '-')}`}>
-            {cat.health}
-          </div>
-          
-          <div className="cat-location">
-            <MapPin className="icon" />
-            <span>{cat.location.address}</span>
-          </div>
-          
-          <div className="cat-discovered">
-            <User className="icon" />
-            <span>Registrado por {cat.discoveredBy.name}</span>
-          </div>
-          
-          <div className="cat-date">
-            <Calendar className="icon" />
-            <span>Registrado em {new Date(cat.createdAt).toLocaleDateString()}</span>
-          </div>
-          
-          <div className="cat-checkins">
-            <Clock className="icon" />
-            <span>Último check-in: {new Date(cat.lastCheckIn).toLocaleDateString()}</span>
-          </div>
-        </div>
-        
-        <div className="cat-description">
-          <h2>Sobre {cat.name}</h2>
-          <p>{cat.description}</p>
-        </div>
-        
+      <section>
+        <h2 className="section-title">Sobre {cat.name}</h2>
+        <p className="cat-description">{cat.description}</p>
+      </section>
+      
+      <section>
+        <h2 className="section-title">Detalhes</h2>
         <div className="cat-details">
           <div className="detail-item">
             <h3>Cor</h3>
@@ -234,47 +164,16 @@ const CatProfile = () => {
             <p>{cat.isVaccinated ? 'Sim' : 'Não/Desconhecido'}</p>
           </div>
         </div>
-        
-        {cat.personalityTraits?.length > 0 && (
-          <div className="cat-personality">
-            <h3>Personalidade</h3>
-            <div className="trait-tags">
-              {cat.personalityTraits.map((trait, index) => (
-                <span key={index} className="trait-tag">{trait}</span>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {cat.needs?.length > 0 && (
-          <div className="cat-needs">
-            <h3>Necessidades</h3>
-            <div className="needs-container">
-              <div className="need-tags">
-                {cat.needs.map((need, index) => (
-                  <span key={index} className="need-tag">
-                    <AlertTriangle className="need-icon" />
-                    {need}
-                  </span>
-                ))}
-              </div>
-              
-              {cat.needsDescription && (
-                <p className="needs-description">{cat.needsDescription}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      </section>
       
-      <div className="cat-map-section">
-        <h2>Localização</h2>
+      <section className="cat-map-section">
+        <h2 className="section-title">Localização</h2>
         <CatMap cat={cat} />
-      </div>
+      </section>
       
-      <div className="cat-checkins-section">
+      <section className="checkins-section">
         <div className="section-header">
-          <h2>Check-ins Recentes</h2>
+          <h2 className="section-title">Check-ins Recentes</h2>
           <Link to={`/cat/${cat._id}/checkins`} className="view-all-link">
             Ver todos
           </Link>
@@ -283,44 +182,21 @@ const CatProfile = () => {
         {recentCheckIns.length > 0 ? (
           <div className="checkins-list">
             {recentCheckIns.map(checkIn => (
-              <CheckInItem key={checkIn._id} checkIn={checkIn} />
+              <div key={checkIn._id} className="checkin-item">
+                {/* Conteúdo do check-in */}
+              </div>
             ))}
           </div>
         ) : (
           <div className="empty-checkins">
             <Info className="icon" />
             <p>Nenhum check-in recente.</p>
-            <Link to={`/checkin/${cat._id}`} className="btn btn-primary">
+            <Link to={`/checkin/${cat._id}`} className="action-btn checkin-btn">
               Fazer Check-in
             </Link>
           </div>
         )}
-      </div>
-      
-      {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Confirmar exclusão</h2>
-            <p>Tem certeza que deseja excluir {cat.name}? Esta ação não pode ser desfeita.</p>
-            
-            <div className="modal-actions">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancelar
-              </button>
-              
-              <button 
-                className="btn btn-danger"
-                onClick={handleDelete}
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </section>
     </div>
   );
 };

@@ -437,7 +437,7 @@ exports.getUserAchievements = async (req, res) => {
         icon: 'achievements/100-cats.png'
       },
       {
-        title: 'Mestre CatMon',
+        title: 'Mestre KatMon',
         description: 'Atingiu o nível 10',
         icon: 'achievements/level-10.png'
       }

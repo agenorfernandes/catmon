@@ -29,9 +29,18 @@ const UserSchema = new Schema({
   },
   googleId: String,
   appleId: String,
+  avatarId: {
+    type: Number,
+    default: function() {
+      // Gerar um ID aleatório entre 1-10 ao criar um novo usuário
+      return Math.floor(Math.random() * 10) + 1;
+    }
+  },
   profilePicture: {
     type: String,
-    default: 'default-avatar.png'
+    default: function() {
+      return `/assets/avatars/cat-avatar-${this.avatarId || 1}.png`;
+    }
   },
   role: {
     type: String,
@@ -214,6 +223,7 @@ UserSchema.methods.formatProfile = function() {
     name: this.name,
     email: this.email,
     profilePicture: this.profilePicture,
+    avatarId: this.avatarId,
     bio: this.bio || '',
     level: this.level,
     points: this.points,

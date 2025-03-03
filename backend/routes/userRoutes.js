@@ -47,4 +47,9 @@ router.get('/ranking', auth, userController.getRanking);
 // @access  Private
 router.get('/stats/:id?', auth, userController.getUserStats);
 
+// @route   PUT api/users/profile/avatar
+// @desc    Atualizar avatar do usuário
+// @access  Private
+router.put('/profile/avatar', auth, userController.updateUserAvatar);
+
 module.exports = router;
