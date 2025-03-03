@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Heart, AlertTriangle, Clock, Droplet, Coffee } from 'react-feather';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import '../styles/buttons.css';
 
 // Contextos
 import { AuthContext } from '../contexts/AuthContext';
@@ -13,7 +14,6 @@ import CatCard from '../components/Cat/CatCard';
 import EmergencyCatCard from '../components/Cat/EmergencyCatCard';
 import EmptyState from '../components/Shared/EmptyState';
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -183,7 +183,6 @@ const Home = () => {
                 <Link to="/login" className="btn btn-secondary">{t('auth.login')}</Link>
               </div>
             )}
-            <LanguageSwitcher />
           </div>
         </div>
       </section>
