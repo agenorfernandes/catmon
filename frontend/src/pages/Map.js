@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Search, List, Layers, Plus, Menu } from 'react-feather';
 import axios from 'axios';
-import './Map.css'; // Certifique-se de que este arquivo existe
+import '../styles/Map.css'; // Certifique-se de que este arquivo existe
 
 // Contextos
 import { AuthContext } from '../contexts/AuthContext';

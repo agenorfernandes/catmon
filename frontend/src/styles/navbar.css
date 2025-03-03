@@ -2,17 +2,62 @@
 
 .navbar {
   background: linear-gradient(to bottom, #ff4444, #cc0000);
-  padding: 1rem 2rem;
+  height: 60px; /* Altura fixa */
+  padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  width: 100%;
 }
 
-.navbar-brand {
+.navbar-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  height: 100%;
+}
+
+.logo-wrapper {
+  height: 50px; /* Altura fixa para o logo */
+  width: 100px; /* Largura fixa para o logo */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-logo-image {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.navbar-brand-text {
+  font-family: 'Press Start 2P', cursive;
+  color: #ffcb05;
+  font-size: 1.5rem;
+  text-shadow: 
+    -2px -2px 0 #2a75bb,
+    2px -2px 0 #2a75bb,
+    -2px 2px 0 #2a75bb,
+    2px 2px 0 #2a75bb;
+  margin-left: 12px;
+  white-space: nowrap;
 }
 
 .navbar-brand a {
@@ -66,4 +111,10 @@
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
+}
+
+/* Ajustar o espaço para o conteúdo abaixo da navbar */
+main {
+  margin-top: 60px; /* Mesma altura da navbar */
+  min-height: calc(100vh - 60px);
 }

@@ -19,7 +19,7 @@ body {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 40px;
     width: 100%;
-    max-width: 600px;
+    max-width: 1024px;
 }
 
 .page-header {
@@ -167,7 +167,7 @@ body {
     cursor: not-allowed;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 1024px) {
     .form-row {
         flex-direction: column;
         gap: 15px;
