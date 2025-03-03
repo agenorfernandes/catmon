@@ -76,7 +76,7 @@ const catAvatars = [
    */
   export const getAllAvatars = () => {
     return [...catAvatars];
-  };
+  }; 
   
   export default {
     getRandomAvatar,

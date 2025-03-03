@@ -21,7 +21,7 @@
     overflow-y: auto;
   }
   
-  .avatar-selector-content h2 {
+  .avatar-selector-content h2 { 
     text-align: center;
     margin-bottom: 24px;
     color: #4A66E2;

@@ -17,7 +17,7 @@ import { AuthContext } from '../contexts/AuthContext';
 
 // Componentes
 import LoadingSpinner from '../components/Shared/LoadingSpinner';
-import AvatarSelector from '../components/Profile/AvatarSelector';
+import AvatarSelector from '../components/profile/AvatarSelector';
 
 // Estilos
 import '../styles/userProfile.css';
@@ -357,4 +357,4 @@ const UserProfile = () => {
   );
 };
 
-export default UserProfile;
+export default UserProfile; 

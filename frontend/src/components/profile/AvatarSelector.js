@@ -20,7 +20,7 @@ const AvatarSelector = ({ onSelectAvatar, onClose }) => {
               <img src={avatar.url} alt={avatar.name} />
             </div>
           ))}
-        </div>
+        </div> 
         <button 
           className="close-modal-btn"
           onClick={onClose}

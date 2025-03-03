@@ -52,4 +52,4 @@ router.get('/stats/:id?', auth, userController.getUserStats);
 // @access  Private
 router.put('/profile/avatar', auth, userController.updateUserAvatar);
 
-module.exports = router;
+module.exports = router; 
