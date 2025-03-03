@@ -11,6 +11,7 @@ module.exports = function(req, res, next) {
   
   // Verificar se não há token
   if (!token) {
+    console.log('Requisição sem token de autenticação');
     return res.status(401).json({ msg: 'Sem token, autorização negada' });
   }
   
@@ -22,6 +23,7 @@ module.exports = function(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error('Token inválido:', err.message);
     res.status(401).json({ msg: 'Token inválido' });
   }
 };

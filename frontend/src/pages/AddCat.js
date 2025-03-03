@@ -73,6 +73,11 @@ const AddCat = () => {
         ...prevState, 
         photoUrl: files[0] 
       }));
+      
+      // Limpar erro
+      if (errors.photoUrl) {
+        setErrors(prev => ({ ...prev, photoUrl: '' }));
+      }
     } else if (name === 'additionalPhotos') {
       // Limitar para 5 fotos adicionais
       const selectedPhotos = Array.from(files).slice(0, 5);
@@ -143,24 +148,17 @@ const AddCat = () => {
 
     const catData = new FormData();
 
-    // Adicionar campos ao FormData
-    Object.keys(formData).forEach(key => {
-      if (key === 'photoUrl' && formData.photoUrl) {
-        catData.append('photo', formData.photoUrl);
-      } else if (key === 'additionalPhotos' && formData.additionalPhotos.length > 0) {
-        formData.additionalPhotos.forEach(photo => {
-          catData.append('additionalPhotos', photo);
-        });
-      } else if (Array.isArray(formData[key])) {
-        formData[key].forEach(item => {
-          catData.append(key, item);
-        });
-      } else if (formData[key] !== null && formData[key] !== undefined) {
-        catData.append(key, formData[key]);
-      }
-    });
+    // Adicionar campos de texto
+    catData.append('name', formData.name);
+    catData.append('description', formData.description);
+    catData.append('color', formData.color);
+    catData.append('health', formData.health);
+    catData.append('estimatedAge', formData.estimatedAge);
+    catData.append('gender', formData.gender);
+    catData.append('isSterilized', formData.isSterilized.toString());
+    catData.append('isVaccinated', formData.isVaccinated.toString());
 
-    // Adicionar localização
+    // Adicionar a localização como JSON
     const location = {
       type: 'Point',
       coordinates: [userLocation.longitude, userLocation.latitude],
@@ -168,17 +166,53 @@ const AddCat = () => {
     };
     catData.append('location', JSON.stringify(location));
 
+    // Adicionar foto principal se existir
+    if (formData.photoUrl) {
+      catData.append('photo', formData.photoUrl);
+    }
+
+    // Adicionar fotos adicionais se existirem
+    if (formData.additionalPhotos.length > 0) {
+      formData.additionalPhotos.forEach(photo => {
+        catData.append('additionalPhotos', photo);
+      });
+    }
+
+    // Adicionar arrays
+    if (formData.personalityTraits.length > 0) {
+      formData.personalityTraits.forEach(trait => {
+        catData.append('personalityTraits', trait);
+      });
+    }
+
+    if (formData.needs.length > 0) {
+      formData.needs.forEach(need => {
+        catData.append('needs', need);
+      });
+    }
+
+    if (formData.needsDescription) {
+      catData.append('needsDescription', formData.needsDescription);
+    }
+
     try {
+      // Para debugging - verificar o que está sendo enviado
+      console.log('Enviando dados do gato:');
+      for (let pair of catData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
       const response = await axios.post('/api/cats', catData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'x-auth-token': localStorage.getItem('token')
         }
       });
 
       toast.success('Gato adicionado com sucesso!');
       navigate(`/cat/${response.data._id}`);
     } catch (error) {
-      console.error('Erro ao adicionar gato:', error);
+      console.error('Erro ao adicionar gato:', error.response?.data || error);
       toast.error(error.response?.data?.msg || 'Erro ao adicionar gato');
       setLoading(false);
     }
