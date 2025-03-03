@@ -164,7 +164,7 @@ exports.deleteCheckIn = async (req, res) => {
     });
     
     // Excluir check-in
-    await checkIn.remove();
+    await CheckIn.deleteOne({ _id: checkIn._id });
     
     res.json({ msg: 'Check-in removido' });
   } catch (err) {

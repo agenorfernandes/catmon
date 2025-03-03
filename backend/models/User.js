@@ -35,7 +35,7 @@ const UserSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'moderator'],
     default: 'user'
   },
   bio: String,
@@ -50,7 +50,10 @@ const UserSchema = new Schema({
   achievements: [{
     title: String,
     description: String,
-    dateEarned: Date,
+    dateEarned: {
+      type: Date,
+      default: Date.now
+    },
     icon: String
   }],
   totalCatsHelped: {
@@ -70,7 +73,8 @@ const UserSchema = new Schema({
     coordinates: {
       type: [Number], // [longitude, latitude]
       default: [0, 0]
-    }
+    },
+    address: String
   },
   pushToken: String,
   notificationSettings: {
@@ -95,11 +99,14 @@ const UserSchema = new Schema({
     type: Boolean,
     default: true
   },
+  deactivatedAt: Date,
   lastLogin: Date,
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }, { timestamps: true });
 
 // Criptografar senha antes de salvar
@@ -115,6 +122,14 @@ UserSchema.pre('save', async function(next) {
   } catch (err) {
     next(err);
   }
+});
+
+// Atualizar nível quando os pontos forem modificados
+UserSchema.pre('save', function(next) {
+  if (this.isModified('points')) {
+    this.level = this.calculateLevel();
+  }
+  next();
 });
 
 // Método para comparar senhas
@@ -145,15 +160,78 @@ UserSchema.methods.calculateLevel = function() {
   return level;
 };
 
-// Atualizar nível quando os pontos forem modificados
-UserSchema.pre('save', function(next) {
-  if (this.isModified('points')) {
-    this.level = this.calculateLevel();
+// Método para ajustar o nível após alterações de pontos
+UserSchema.methods.adjustLevel = async function() {
+  const newLevel = this.calculateLevel();
+  if (this.level !== newLevel) {
+    this.level = newLevel;
+    await this.save();
   }
-  next();
-});
+  return this;
+};
+
+// Método para calcular pontos para próximo nível
+UserSchema.methods.pointsToNextLevel = function() {
+  const currentLevel = this.level;
+  const nextLevel = currentLevel + 1;
+  
+  // Pontos necessários para o próximo nível: 100 * (nextLevel - 1)^2
+  const pointsNeeded = 100 * Math.pow(nextLevel - 1, 2);
+  
+  // Diferença
+  return pointsNeeded - this.points;
+};
+
+// Método para adicionar uma conquista
+UserSchema.methods.addAchievement = async function(achievement) {
+  // Verificar se já possui esta conquista
+  const hasAchievement = this.achievements.some(a => a.title === achievement.title);
+  
+  if (!hasAchievement) {
+    this.achievements.push({
+      title: achievement.title,
+      description: achievement.description,
+      dateEarned: new Date(),
+      icon: achievement.icon
+    });
+    
+    await this.save();
+    return true; // Nova conquista
+  }
+  
+  return false; // Já possui esta conquista
+};
+
+// Método para verificar se tem uma conquista específica
+UserSchema.methods.hasAchievement = function(title) {
+  return this.achievements.some(a => a.title === title);
+};
+
+// Método para formatar o perfil do usuário para API
+UserSchema.methods.formatProfile = function() {
+  return {
+    id: this._id,
+    name: this.name,
+    email: this.email,
+    profilePicture: this.profilePicture,
+    bio: this.bio || '',
+    level: this.level,
+    points: this.points,
+    totalCatsHelped: this.totalCatsHelped,
+    achievementsCount: this.achievements.length,
+    favoritesCount: this.favorites.length,
+    role: this.role,
+    createdAt: this.createdAt
+  };
+};
 
 // Adicionar índice geoespacial para consultas de proximidade
 UserSchema.index({ location: '2dsphere' });
+
+// Criar índices para consultas comuns
+UserSchema.index({ email: 1 });
+UserSchema.index({ points: -1 });
+UserSchema.index({ googleId: 1 });
+UserSchema.index({ appleId: 1 });
 
 module.exports = mongoose.model('User', UserSchema);

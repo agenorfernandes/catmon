@@ -1,6 +1,7 @@
 const Cat = require('../models/Cat');
 const CheckIn = require('../models/CheckIn');
 const User = require('../models/User');
+const geocoder = require('../utils/geocoder');
 
 // Obter todos os gatos (com filtros e paginação)
 exports.getAllCats = async (req, res) => {
@@ -22,10 +23,10 @@ exports.getAllCats = async (req, res) => {
     
     // Construir o filtro
     const filter = {};
-    if (status) filter.status = status;
-    if (health) filter.health = health;
-    if (gender) filter.gender = gender;
-    if (estimatedAge) filter.estimatedAge = estimatedAge;
+    if (status) filter.status = status.split(',');
+    if (health) filter.health = health.split(',');
+    if (gender) filter.gender = gender.split(',');
+    if (estimatedAge) filter.estimatedAge = estimatedAge.split(',');
 
     // Filtro de localização, se fornecido
     if (lat && lng) {
@@ -57,8 +58,8 @@ exports.getAllCats = async (req, res) => {
       totalCats: total
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Erro em getAllCats:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
 
@@ -83,13 +84,13 @@ exports.getCatById = async (req, res) => {
       recentCheckIns
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro em getCatById:', err.message);
     
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ msg: 'Gato não encontrado' });
     }
     
-    res.status(500).json({ msg: 'Erro no servidor' });
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
 
@@ -99,8 +100,6 @@ exports.createCat = async (req, res) => {
     const {
       name,
       description,
-      photoUrl,
-      additionalPhotos,
       health,
       color,
       estimatedAge,
@@ -112,6 +111,40 @@ exports.createCat = async (req, res) => {
       needs,
       needsDescription
     } = req.body;
+
+    // Processar arquivos de imagem
+    let photoUrl = '';
+    let additionalPhotos = [];
+
+    // Verificar se há arquivos enviados
+    if (req.files) {
+      if (req.files.photo) {
+        photoUrl = `/uploads/cats/${req.files.photo[0].filename}`;
+      }
+      
+      if (req.files.additionalPhotos) {
+        additionalPhotos = req.files.additionalPhotos.map(file => 
+          `/uploads/cats/${file.filename}`
+        );
+      }
+    }
+
+    // Geocodificar endereço se fornecido
+    let locationData = location;
+    if (typeof location === 'string') {
+      try {
+        const geoData = await geocoder.geocode(location);
+        if (geoData && geoData.length > 0) {
+          locationData = {
+            type: 'Point',
+            coordinates: [geoData[0].longitude, geoData[0].latitude],
+            address: geoData[0].formattedAddress
+          };
+        }
+      } catch (geoErr) {
+        console.error('Erro de geocodificação:', geoErr);
+      }
+    }
 
     // Criar novo gato
     const newCat = new Cat({
@@ -126,7 +159,7 @@ exports.createCat = async (req, res) => {
       isSterilized,
       isVaccinated,
       personalityTraits: personalityTraits || [],
-      location,
+      location: locationData,
       discoveredBy: req.user.id,
       needs: needs || [],
       needsDescription
@@ -141,8 +174,8 @@ exports.createCat = async (req, res) => {
 
     res.status(201).json(cat);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Erro em createCat:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
 
@@ -152,8 +185,6 @@ exports.updateCat = async (req, res) => {
     const {
       name,
       description,
-      photoUrl,
-      additionalPhotos,
       health,
       color,
       estimatedAge,
@@ -180,6 +211,48 @@ exports.updateCat = async (req, res) => {
       return res.status(403).json({ msg: 'Acesso negado. Você não pode editar este gato' });
     }
 
+    // Processar arquivos de imagem
+    let photoUrl = cat.photoUrl;
+    let additionalPhotos = cat.additionalPhotos;
+
+    // Verificar se há arquivos enviados
+    if (req.files) {
+      if (req.files.photo) {
+        photoUrl = `/uploads/cats/${req.files.photo[0].filename}`;
+      }
+      
+      if (req.files.additionalPhotos) {
+        // Permitir adicionar mais fotos ou substituir todas
+        if (req.body.replacePhotos === 'true') {
+          additionalPhotos = req.files.additionalPhotos.map(file => 
+            `/uploads/cats/${file.filename}`
+          );
+        } else {
+          const newPhotos = req.files.additionalPhotos.map(file => 
+            `/uploads/cats/${file.filename}`
+          );
+          additionalPhotos = [...additionalPhotos, ...newPhotos];
+        }
+      }
+    }
+
+    // Geocodificar endereço se fornecido
+    let locationData = location;
+    if (typeof location === 'string') {
+      try {
+        const geoData = await geocoder.geocode(location);
+        if (geoData && geoData.length > 0) {
+          locationData = {
+            type: 'Point',
+            coordinates: [geoData[0].longitude, geoData[0].latitude],
+            address: geoData[0].formattedAddress
+          };
+        }
+      } catch (geoErr) {
+        console.error('Erro de geocodificação:', geoErr);
+      }
+    }
+
     // Construir objeto de atualização
     const updateFields = {};
     if (name) updateFields.name = name;
@@ -193,7 +266,7 @@ exports.updateCat = async (req, res) => {
     if (isSterilized !== undefined) updateFields.isSterilized = isSterilized;
     if (isVaccinated !== undefined) updateFields.isVaccinated = isVaccinated;
     if (personalityTraits) updateFields.personalityTraits = personalityTraits;
-    if (location) updateFields.location = location;
+    if (locationData) updateFields.location = locationData;
     if (status) updateFields.status = status;
     if (needs) updateFields.needs = needs;
     if (needsDescription) updateFields.needsDescription = needsDescription;
@@ -210,8 +283,8 @@ exports.updateCat = async (req, res) => {
 
     res.json(cat);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Erro em updateCat:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
 
@@ -233,25 +306,25 @@ exports.deleteCat = async (req, res) => {
     // Excluir check-ins relacionados
     await CheckIn.deleteMany({ cat: cat._id });
     
-    // Excluir gato
-    await cat.remove();
+    // Excluir gato (usando deleteOne em vez de remove)
+    await Cat.deleteOne({ _id: cat._id });
     
-    res.json({ msg: 'Gato removido' });
+    res.json({ msg: 'Gato removido com sucesso' });
   } catch (err) {
-    console.error(err.message);
+    console.error('Erro em deleteCat:', err.message);
     
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ msg: 'Gato não encontrado' });
     }
     
-    res.status(500).json({ msg: 'Erro no servidor' });
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
 
 // Obter gatos próximos
 exports.getNearbyCats = async (req, res) => {
   try {
-    const { lat, lng, radius = 5000 } = req.query; // raio em metros
+    const { lat, lng, radius = 5000, limit = 20 } = req.query; // raio em metros
     
     if (!lat || !lng) {
       return res.status(400).json({ msg: 'Latitude e longitude são necessárias' });
@@ -267,12 +340,83 @@ exports.getNearbyCats = async (req, res) => {
           $maxDistance: parseInt(radius)
         }
       },
-      status: 'Ativo' // Apenas gatos ativos
-    }).populate('discoveredBy', 'name profilePicture');
+      status: { $in: ['Ativo', 'Em tratamento'] } // Incluir gatos em tratamento também
+    })
+    .limit(parseInt(limit))
+    .populate('discoveredBy', 'name profilePicture');
     
     res.json(cats);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Erro em getNearbyCats:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
+  }
+};
+
+// Obter gatos em emergência
+exports.getEmergencyCats = async (req, res) => {
+  try {
+    const { lat, lng, radius = 10000, limit = 20 } = req.query; // raio maior para emergências
+    
+    let query = {
+      health: { $in: ['Emergência', 'Precisa de atenção'] },
+      status: 'Ativo'
+    };
+    
+    // Adicionar filtro de localização se fornecido
+    if (lat && lng) {
+      query.location = {
+        $nearSphere: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseInt(radius)
+        }
+      };
+    }
+    
+    const cats = await Cat.find(query)
+      .sort('-updatedAt')
+      .limit(parseInt(limit))
+      .populate('discoveredBy', 'name profilePicture');
+    
+    res.json(cats);
+  } catch (err) {
+    console.error('Erro em getEmergencyCats:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
+  }
+};
+
+// Remover foto adicional
+exports.removePhoto = async (req, res) => {
+  try {
+    const { photoIndex } = req.params;
+    
+    // Encontrar o gato
+    const cat = await Cat.findById(req.params.id);
+    
+    if (!cat) {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    // Verificar se o usuário é o descobridor ou admin
+    const isAdmin = req.user.role === 'admin';
+    if (cat.discoveredBy.toString() !== req.user.id && !isAdmin) {
+      return res.status(403).json({ msg: 'Acesso negado' });
+    }
+    
+    // Verificar se o índice da foto é válido
+    if (photoIndex < 0 || photoIndex >= cat.additionalPhotos.length) {
+      return res.status(400).json({ msg: 'Índice de foto inválido' });
+    }
+    
+    // Remover a foto do array
+    cat.additionalPhotos.splice(photoIndex, 1);
+    await cat.save();
+    
+    res.json(cat);
+  } catch (err) {
+    console.error('Erro em removePhoto:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
