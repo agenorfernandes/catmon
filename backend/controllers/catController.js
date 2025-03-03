@@ -201,12 +201,12 @@ exports.createCat = async (req, res) => {
       color,
       estimatedAge,
       gender,
-      isSterilized,
-      isVaccinated,
-      personalityTraits: personalityTraits || [],
-      location,
+      isSterilized: convertedIsSterilized,
+      isVaccinated: convertedIsVaccinated,
+      personalityTraits: processedPersonalityTraits,
+      location: locationData,
       discoveredBy: req.user.id,
-      needs: needs || [],
+      needs: processedNeeds,
       needsDescription
     });
 
