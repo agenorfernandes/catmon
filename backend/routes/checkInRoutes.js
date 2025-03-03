@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const checkInController = require('../controllers/checkInController');
 const auth = require('../middleware/auth');
-const multerUpload = require('../middleware/upload');
+const { upload } = require('../middleware/upload');  // Alterado aqui - importando a propriedade upload
 const { check } = require('express-validator');
 
 // @route   GET api/checkins/cat/:catId
@@ -27,7 +27,7 @@ router.post(
   '/',
   [
     auth,
-    multerUpload.array('photos', 5),
+    upload.array('photos', 5),  // Aqui usamos upload.array ao invés de multerUpload.array
     [
       check('catId', 'ID do gato é obrigatório').not().isEmpty(),
       check('location', 'Localização é obrigatória').not().isEmpty(),

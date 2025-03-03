@@ -312,7 +312,7 @@ exports.deleteCat = async (req, res) => {
     await CheckIn.deleteMany({ cat: cat._id });
     
     // Excluir gato
-    await cat.remove();
+    await Cat.deleteOne({ _id: cat._id });
     
     res.json({ msg: 'Gato removido' });
   } catch (err) {

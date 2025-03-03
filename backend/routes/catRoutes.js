@@ -83,11 +83,87 @@ router.put(
 // @route   DELETE api/cats/:id
 // @desc    Excluir gato
 // @access  Private
-router.delete('/:id', auth, catController.deleteCat);
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const Cat = require('../models/Cat');
+    const CheckIn = require('../models/CheckIn');
+    
+    const cat = await Cat.findById(req.params.id);
+    
+    if (!cat) {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    // Verificar se o usuário é o descobridor ou admin
+    const isAdmin = req.user.role === 'admin';
+    if (cat.discoveredBy.toString() !== req.user.id && !isAdmin) {
+      return res.status(403).json({ msg: 'Acesso negado. Você não pode excluir este gato' });
+    }
+    
+    // Excluir check-ins relacionados
+    await CheckIn.deleteMany({ cat: cat._id });
+    
+    // Excluir gato
+    await Cat.deleteOne({ _id: cat._id });
+    
+    res.json({ msg: 'Gato removido' });
+  } catch (err) {
+    console.error(err.message);
+    
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+});
 
 // @route   DELETE api/cats/:id/photo/:photoIndex
 // @desc    Remover foto adicional de um gato
 // @access  Private
-router.delete('/:id/photo/:photoIndex', auth, catController.removePhoto);
+router.delete('/:id/photo/:photoIndex', auth, async (req, res) => {
+  try {
+    const Cat = require('../models/Cat');
+    
+    const { id, photoIndex } = req.params;
+    const index = parseInt(photoIndex);
+    
+    if (isNaN(index)) {
+      return res.status(400).json({ msg: 'Índice de foto inválido' });
+    }
+    
+    const cat = await Cat.findById(id);
+    
+    if (!cat) {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    // Verificar se o usuário é o descobridor ou admin
+    const isAdmin = req.user.role === 'admin';
+    if (cat.discoveredBy.toString() !== req.user.id && !isAdmin) {
+      return res.status(403).json({ msg: 'Acesso negado. Você não pode editar este gato' });
+    }
+    
+    // Verificar se o índice é válido
+    if (index < 0 || index >= cat.additionalPhotos.length) {
+      return res.status(400).json({ msg: 'Índice de foto inválido' });
+    }
+    
+    // Remover a foto do array
+    cat.additionalPhotos.splice(index, 1);
+    
+    await cat.save();
+    
+    res.json({ msg: 'Foto removida com sucesso', cat });
+  } catch (err) {
+    console.error(err.message);
+    
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Gato não encontrado' });
+    }
+    
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+});
 
 module.exports = router;
