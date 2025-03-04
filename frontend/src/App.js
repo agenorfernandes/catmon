@@ -136,10 +136,10 @@ const AppContent = () => {
 };
 
 function App() {
+  const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com";
+  
   return (
-    <GoogleOAuthProvider 
-      clientId="273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com"
-    >
+    <GoogleOAuthProvider clientId={clientId}>
       <AuthProvider>
         <LocationProvider>
           <Router>
