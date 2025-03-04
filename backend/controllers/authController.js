@@ -99,80 +99,90 @@ exports.login = async (req, res) => {
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
-
-    // Verificar o token com o Google
-    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const { email, name, picture, sub: googleId } = response.data;
-
-    if (!email) {
-      return res.status(400).json({ msg: 'Email não fornecido pelo Google' });
+    
+    if (!token) {
+      return res.status(400).json({ msg: 'Token não fornecido' });
     }
 
-    // Procurar ou criar usuário
-    let user = await User.findOne({ email });
+    console.log('Token recebido:', token); // Debug
 
-    if (!user) {
-      // Criar novo usuário
-      const avatarId = Math.floor(Math.random() * 10) + 1;
-      user = new User({
-        name,
-        email,
-        googleId,
-        profilePicture: picture || `/assets/avatars/cat-avatar-${avatarId}.png`,
-        authMethod: 'google',
-        avatarId
-      });
+    try {
+      // Verificar o token com o Google
+      const response = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-      await user.save();
-    } else {
-      // Atualizar informações do usuário existente
-      user.googleId = googleId;
-      user.name = name;
-      if (picture) {
-        user.profilePicture = picture;
+      console.log('Google response:', response.data); // Debug
+
+      const { email, name, picture, sub: googleId } = response.data;
+
+      if (!email) {
+        return res.status(400).json({ msg: 'Email não fornecido pelo Google' });
       }
-      user.authMethod = 'google';
-      await user.save();
-    }
 
-    // Gerar token JWT
-    const jwtToken = jwt.sign(
-      {
+      // Procurar ou criar usuário
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        // Criar novo usuário
+        const avatarId = Math.floor(Math.random() * 10) + 1;
+        user = new User({
+          name,
+          email,
+          googleId,
+          profilePicture: picture || `/assets/avatars/cat-avatar-${avatarId}.png`,
+          authMethod: 'google',
+          avatarId
+        });
+
+        await user.save();
+        console.log('Novo usuário criado:', user); // Debug
+      }
+
+      // Gerar token JWT
+      const jwtToken = jwt.sign(
+        {
+          user: {
+            id: user._id,
+            email: user.email
+          }
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.json({
+        token: jwtToken,
         user: {
-          id: user.id,
+          id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role
+          profilePicture: user.profilePicture,
+          role: user.role,
+          level: user.level,
+          points: user.points
         }
-      },
-      process.env.JWT_SECRET || 'seu_jwt_secret_padrao',
-      { expiresIn: '7d' }
-    );
+      });
 
-    res.json({
-      token: jwtToken,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        profilePicture: user.profilePicture,
-        role: user.role,
-        level: user.level,
-        points: user.points
-      }
-    });
+    } catch (googleError) {
+      console.error('Erro na verificação com Google:', googleError);
+      return res.status(401).json({ 
+        msg: 'Token Google inválido',
+        error: googleError.message 
+      });
+    }
 
   } catch (error) {
-    console.error('Erro detalhado no login com Google:', error);
+    console.error('Erro completo no login Google:', error);
     res.status(500).json({ 
-      msg: 'Erro no servidor durante autenticação Google',
+      msg: 'Erro interno no servidor',
       error: error.message,
-      stack: error.stack 
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

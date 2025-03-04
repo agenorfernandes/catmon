@@ -137,7 +137,9 @@ const AppContent = () => {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com">
+    <GoogleOAuthProvider 
+      clientId="273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com"
+    >
       <AuthProvider>
         <LocationProvider>
           <Router>

@@ -54,33 +54,23 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
+// Configuração do CORS - deve vir antes de outras middlewares
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token');
+
+  // Permitir preflight
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Configuração do CORS
-app.use(cors({
-  origin: function(origin, callback) {
-    // Permitir requisições sem origin (como apps mobile)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      `http://${process.env.HOST_IP}:3000`,
-      // Adicione aqui outros domínios permitidos
-    ];
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'Política CORS não permite acesso deste domínio.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
-}));
 
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

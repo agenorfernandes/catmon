@@ -1,20 +1,18 @@
 import axios from 'axios';
 
-// Determinar a baseURL com base no ambiente
 const getBaseURL = () => {
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:5000';
   }
-  // Caso contrário, tenta descobrir automaticamente
-  const hostname = window.location.hostname;
-  return `http://${hostname}:5000`;
+  return process.env.REACT_APP_API_URL;
 };
 
 const api = axios.create({
   baseURL: getBaseURL(),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
+  withCredentials: false, // Alterado para false
   timeout: 10000 // 10 segundos
 });
 
