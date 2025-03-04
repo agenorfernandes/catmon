@@ -23,7 +23,7 @@
     "web-vitals": "^3.3.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "HOST=catmon.com.br DANGEROUSLY_DISABLE_HOST_CHECK=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
