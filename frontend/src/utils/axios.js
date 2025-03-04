@@ -8,7 +8,7 @@ const getBaseURL = () => {
 };
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://catmon.com.br/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
