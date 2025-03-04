@@ -4,13 +4,14 @@ const getBaseURL = () => {
   if (process.env.NODE_ENV === 'development') {
     return 'http://localhost:5000';
   }
-  return process.env.REACT_APP_API_URL;
+  return 'http://api.catmon.com.br';
 };
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: process.env.REACT_APP_API_URL || 'http://catmon.com.br/api',
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
   withCredentials: false, // Alterado para false
   timeout: 10000 // 10 segundos
