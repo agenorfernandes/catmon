@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MapPin, AlertTriangle, Clock, Heart } from 'react-feather';  // Adicionei o import do Heart
+import { MapPin, AlertTriangle, Clock, Heart } from 'react-feather';
 import axios from 'axios';
 
 // Contextos
@@ -70,10 +70,7 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      <div className="welcome-banner">
-        <h1>{t('home.welcome')}</h1>
-        <p>{t('app.slogan')}</p>
-      </div>
+
       
       <div className="tabs-section">
         <div className="tab-buttons">
@@ -81,7 +78,7 @@ const Home = () => {
             className={`tab-btn ${activeTab === 'nearby' ? 'active' : ''}`}
             onClick={() => setActiveTab('nearby')}
           >
-            <MapPin size={20} />
+            <Heart size={20} />
             <span>{t('home.nearbyCats')}</span>
           </button>
           <button 
@@ -107,9 +104,30 @@ const Home = () => {
             <>
               {activeTab === 'nearby' && (
                 nearbyCats.length > 0 ? (
-                  <div className="cat-grid">
+                  <div className="cat-gallery">
                     {nearbyCats.map(cat => (
-                      <CatCard key={cat._id} cat={cat} />
+                      <Link to={`/cat/${cat._id}`} key={cat._id} className="cat-gallery-item">
+                        <div className="cat-gallery-image">
+                          <img src={cat.photoUrl} alt={cat.name} />
+                          <div className="cat-status-badge">
+                            <span className={`health-status ${cat.health.toLowerCase().replace(/\s+/g, '-')}`}>
+                              {cat.health}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="cat-gallery-info">
+                          <h3>{cat.name}</h3>
+                          <p className="cat-location">
+                            <MapPin size={14} />
+                            {cat.location?.address || 'Localização não especificada'}
+                          </p>
+                          <div className="cat-actions">
+                            <Link to={`/checkin/${cat._id}`} className="cat-checkin-btn">
+                              Fazer Check-in
+                            </Link>
+                          </div>
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
@@ -125,9 +143,30 @@ const Home = () => {
               
               {activeTab === 'emergency' && (
                 emergencyCats.length > 0 ? (
-                  <div className="cat-grid">
+                  <div className="cat-gallery">
                     {emergencyCats.map(cat => (
-                      <EmergencyCatCard key={cat._id} cat={cat} />
+                      <Link to={`/cat/${cat._id}`} key={cat._id} className="cat-gallery-item emergency">
+                        <div className="cat-gallery-image">
+                          <img src={cat.photoUrl} alt={cat.name} />
+                          <div className="cat-status-badge">
+                            <span className="health-status emergência">
+                              {cat.health}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="cat-gallery-info">
+                          <h3>{cat.name}</h3>
+                          <p className="cat-location">
+                            <MapPin size={14} />
+                            {cat.location?.address || 'Localização não especificada'}
+                          </p>
+                          <div className="cat-actions">
+                            <Link to={`/checkin/${cat._id}`} className="cat-checkin-btn emergency">
+                              Ajudar Agora
+                            </Link>
+                          </div>
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
@@ -142,25 +181,30 @@ const Home = () => {
               {activeTab === 'recent' && (
                 isAuthenticated ? (
                   recentCheckIns.length > 0 ? (
-                    <div className="checkin-list">
+                    <div className="checkin-gallery">
                       {recentCheckIns.map(checkIn => (
                         <div key={checkIn._id} className="checkin-card">
-                          <Link to={`/cat/${checkIn.cat._id}`}>
-                            <img src={checkIn.cat.photoUrl} alt={checkIn.cat.name} />
+                          <Link to={`/cat/${checkIn.cat._id}`} className="checkin-header">
+                            <img src={checkIn.cat.photoUrl} alt={checkIn.cat.name} className="checkin-cat-image"/>
                             <div className="checkin-info">
                               <h3>{checkIn.cat.name}</h3>
-                              <p>
-                                <Clock className="icon" /> {new Date(checkIn.createdAt).toLocaleDateString()}
+                              <p className="checkin-time">
+                                <Clock size={14} /> {new Date(checkIn.createdAt).toLocaleDateString()}
                               </p>
-                              <div className="checkin-actions">
-                                {checkIn.actions.map((action, index) => (
-                                  <span key={index} className="action-tag">
-                                    {action}
-                                  </span>
-                                ))}
-                              </div>
                             </div>
                           </Link>
+                          <div className="checkin-body">
+                            <div className="checkin-actions-list">
+                              {checkIn.actions.map((action, index) => (
+                                <span key={index} className="action-tag">
+                                  {action}
+                                </span>
+                              ))}
+                            </div>
+                            {checkIn.actionsDescription && (
+                              <p className="checkin-description">{checkIn.actionsDescription}</p>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

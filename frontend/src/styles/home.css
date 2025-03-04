@@ -1,138 +1,333 @@
 /* Estilos para a página inicial */
 .home-page {
-    padding: 20px 16px 80px;
-    max-width: 100%;
+  padding: 12px 8px 70px;
+  max-width: 100%;
+  background-color: #f8f9fa;
+}
+
+.welcome-banner {
+  text-align: center;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #ff0202, #ffffff91);
+  padding: 16px;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 102, 226, 0.2);
+}
+
+.welcome-banner h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.welcome-banner p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Estilo das abas */
+.tabs-section {
+  margin-bottom: 16px;
+}
+
+.tab-buttons {
+  display: flex;
+  padding: 8px 4px;
+  margin-bottom: 12px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tab-buttons::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-radius: 20px;
+  margin-right: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.tab-btn.active {
+  background-color: #EEF0FF;
+  color: #4A66E2;
+}
+
+.tab-btn svg {
+  margin-right: 6px;
+}
+
+/* Estilo da galeria de gatos */
+.cat-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.cat-gallery-item {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cat-gallery-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.cat-gallery-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.cat-gallery-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.cat-gallery-item:hover .cat-gallery-image img {
+  transform: scale(1.05);
+}
+
+.cat-status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+}
+
+.health-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.excelente {
+  color: #00a86b;
+}
+
+.bom {
+  color: #0085ff;
+}
+
+.regular {
+  color: #ffc107;
+}
+
+.precisa-de-atenção {
+  color: #ff7043;
+}
+
+.emergência {
+  color: #ff4343;
+}
+
+.cat-gallery-info {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cat-gallery-info h3 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.cat-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.cat-actions {
+  margin-top: auto;
+}
+
+.cat-checkin-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #4A66E2;
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  text-decoration: none;
+  text-align: center;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.cat-checkin-btn.emergency {
+  background-color: #ff4343;
+}
+
+.cat-checkin-btn:hover {
+  background-color: #3952c4;
+}
+
+.cat-checkin-btn.emergency:hover {
+  background-color: #e03a3a;
+}
+
+/* Estilo da galeria de check-ins */
+.checkin-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.checkin-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.checkin-header {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.checkin-cat-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.checkin-info h3 {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+
+.checkin-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+
+.checkin-body {
+  padding: 12px;
+}
+
+.checkin-actions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.action-tag {
+  display: inline-block;
+  background-color: #EEF0FF;
+  color: #4A66E2;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.checkin-description {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Estilos para telas maiores */
+@media (min-width: 768px) {
+  .home-page {
+    padding: 16px 12px 70px;
+    max-width: 1200px;
+    margin: 0 auto;
   }
-  
+
   .welcome-banner {
-    text-align: center;
-    margin-bottom: 24px;
+    padding: 20px;
   }
-  
+
   .welcome-banner h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #4A66E2;
-    margin-bottom: 8px;
+    font-size: 1.8rem;
   }
-  
+
   .welcome-banner p {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 1rem;
   }
-  
-  /* Estilo das abas */
-  .tabs-section {
-    margin-bottom: 16px;
+
+  .cat-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
-  
-  .tab-buttons {
-    display: flex;
-    overflow-x: auto;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    scrollbar-width: none; /* Firefox */
+}
+
+/* Estilos para telas muito grandes */
+@media (min-width: 1200px) {
+  .cat-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
-  
-  .tab-buttons::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+}
+
+/* Estilos para telas pequenas */
+@media (max-width: 480px) {
+  .home-page {
+    padding: 8px 4px 70px;
   }
-  
-  .tab-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    border-radius: 20px;
-    margin-right: 10px;
-    white-space: nowrap;
-    font-size: 14px;
-    color: #666;
-    transition: all 0.2s;
-  }
-  
-  .tab-btn.active {
-    background-color: #EEF0FF;
-    color: #4A66E2;
-  }
-  
-  .tab-btn svg {
-    margin-right: 6px;
-  }
-  
-  /* Estilo dos grids e listas */
-  .cat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-  }
-  
-  .checkin-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .checkin-card {
-    background-color: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .checkin-card a {
-    display: flex;
+
+  .welcome-banner {
     padding: 12px;
-    text-decoration: none;
-    color: inherit;
+    margin-bottom: 12px;
   }
-  
-  .checkin-card img {
-    width: 70px;
-    height: 70px;
-    border-radius: 8px;
-    object-fit: cover;
-    margin-right: 12px;
+
+  .cat-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+    gap: 12px;
   }
-  
-  .checkin-info h3 {
-    font-size: 16px;
-    margin-bottom: 4px;
+
+  .checkin-gallery {
+    grid-template-columns: 1fr;
   }
-  
-  .checkin-info p {
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 8px;
+
+  .cat-gallery-image {
+    height: 180px;
   }
-  
-  .checkin-info .icon {
-    margin-right: 4px;
-  }
-  
-  .action-tag {
-    display: inline-block;
-    background-color: #EEF0FF;
-    color: #4A66E2;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    margin-right: 6px;
-    margin-bottom: 4px;
-  }
-  
-  /* Responsividade */
-  @media (min-width: 640px) {
-    .cat-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
-    
-    .home-page {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-  }
+}
