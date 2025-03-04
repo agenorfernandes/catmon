@@ -8,6 +8,9 @@ import './i18n'; // Importar configuração de i18n
 import './styles/index.css';
 import './styles/home.css'; // Agora o arquivo existe e pode ser importado
 import './styles/catProfile.css';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import './utils/axios';
+import api from './utils/axios';
 
 // Contextos
 import { AuthProvider, AuthContext } from './contexts/AuthContext';
@@ -47,6 +50,20 @@ const AppContent = () => {
     document.title = t('app.name');
   }, [t]);
 
+  useEffect(() => {
+    // Verificar o status do servidor quando o componente montar
+    const checkServer = async () => {
+      try {
+        await api.get('/api/health');
+      } catch (error) {
+        console.error('Erro ao conectar ao servidor:', error);
+        toast.error('Erro ao conectar ao servidor');
+      }
+    };
+
+    checkServer();
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -60,7 +77,7 @@ const AppContent = () => {
       <ToastContainer position="top-center" />
       {isAuthenticated && (
         <button className="logout-btn" onClick={handleLogout}>
-          <LogOut />
+          <LogOut size={16} />
           Sair
         </button>
       )}
@@ -120,13 +137,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <LocationProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </LocationProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId="273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com">
+      <AuthProvider>
+        <LocationProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </LocationProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

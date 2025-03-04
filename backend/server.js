@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -56,7 +57,30 @@ app.use('/api/auth/register', authLimiter);
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cors());
+
+// Configuração do CORS
+app.use(cors({
+  origin: function(origin, callback) {
+    // Permitir requisições sem origin (como apps mobile)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      `http://${process.env.HOST_IP}:3000`,
+      // Adicione aqui outros domínios permitidos
+    ];
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'Política CORS não permite acesso deste domínio.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+}));
 
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -153,12 +177,11 @@ if (process.env.NODE_ENV === 'production') {
 
 // Porta
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0'; // Permitir conexões de qualquer IP
 
-const server = app.listen(PORT, () => {
-  console.log(`Servidor KatMon rodando na porta ${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Servidor KatMon rodando em http://${HOST}:${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`MongoDB: ${mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'}`);
-  console.log(`Memória: ${Math.round(process.memoryUsage().rss / 1024 / 1024 * 100) / 100} MB`);
 });
 
 // Tratamento de encerramento para graceful shutdown

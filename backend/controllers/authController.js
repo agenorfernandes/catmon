@@ -1,9 +1,11 @@
+require('dotenv').config();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const config = require('../../config/default.json');
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(config.googleClientId);
 const appleSignin = require('apple-signin-auth');
+const axios = require('axios');
 
 // Registrar novo usuário
 exports.register = async (req, res) => {
@@ -96,71 +98,82 @@ exports.login = async (req, res) => {
 // Login com Google
 exports.googleLogin = async (req, res) => {
   try {
-    const { idToken } = req.body;
-    
-    // Verificar token do Google
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: config.googleClientId
+    const { token } = req.body;
+
+    // Verificar o token com o Google
+    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
-    
-    const { email_verified, name, email, picture } = ticket.getPayload();
-    
-    if (!email_verified) {
-      return res.status(400).json({ msg: 'Email não verificado pelo Google' });
+
+    const { email, name, picture, sub: googleId } = response.data;
+
+    if (!email) {
+      return res.status(400).json({ msg: 'Email não fornecido pelo Google' });
     }
-    
-    // Verificar se o usuário já existe
+
+    // Procurar ou criar usuário
     let user = await User.findOne({ email });
-    
+
     if (!user) {
-      // Selecionar um avatar aleatório
-      const avatarId = Math.floor(Math.random() * 10) + 1;
-      const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
-      
       // Criar novo usuário
+      const avatarId = Math.floor(Math.random() * 10) + 1;
       user = new User({
         name,
         email,
+        googleId,
+        profilePicture: picture || `/assets/avatars/cat-avatar-${avatarId}.png`,
         authMethod: 'google',
-        googleId: ticket.getUserId(),
-        avatarId,
-        profilePicture: picture || profilePicture
+        avatarId
       });
-      
+
       await user.save();
     } else {
-      // Atualizar usuário existente com informações do Google
-      user.googleId = ticket.getUserId();
-      
-      // Atualizar avatar somente se usuário não tiver escolhido um personalizado
-      if (!user.avatarId) {
-        const avatarId = Math.floor(Math.random() * 10) + 1;
-        user.avatarId = avatarId;
-        user.profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+      // Atualizar informações do usuário existente
+      user.googleId = googleId;
+      user.name = name;
+      if (picture) {
+        user.profilePicture = picture;
       }
-      
-      user.lastLogin = Date.now();
+      user.authMethod = 'google';
       await user.save();
     }
-    
-    // Gerar token
-    const token = user.generateAuthToken();
-    
+
+    // Gerar token JWT
+    const jwtToken = jwt.sign(
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      },
+      process.env.JWT_SECRET || 'seu_jwt_secret_padrao',
+      { expiresIn: '7d' }
+    );
+
     res.json({
-      token,
+      token: jwtToken,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         profilePicture: user.profilePicture,
+        role: user.role,
         level: user.level,
         points: user.points
       }
     });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+
+  } catch (error) {
+    console.error('Erro detalhado no login com Google:', error);
+    res.status(500).json({ 
+      msg: 'Erro no servidor durante autenticação Google',
+      error: error.message,
+      stack: error.stack 
+    });
   }
 };
 

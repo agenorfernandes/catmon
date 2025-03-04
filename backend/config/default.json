@@ -1,0 +1,6 @@
+{
+  "mongoURI": "sua_string_de_conexao_mongodb",
+  "jwtSecret": "seu_jwt_secret",
+  "googleClientId": "273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com",
+  "googleClientSecret": "hFJ09NrOsn0ru1OKDaCw6hNm"
+}

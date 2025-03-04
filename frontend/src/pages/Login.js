@@ -9,6 +9,7 @@ import googleIcon from '../assets/icons/google.svg';
 import appleIcon from '../assets/icons/apple.svg';
 import katmonLogo from '../assets/Logo_Katmon-removebg-preview.svg';
 import './Login.css';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -85,6 +86,38 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const response = await axios.post('/api/auth/google', 
+          { token: tokenResponse.access_token },
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            withCredentials: true
+          }
+        );
+
+        // Armazenar token no localStorage
+        localStorage.setItem('token', response.data.token);
+        
+        // Atualizar estado de autenticação
+        login(response.data.token, response.data.user);
+        
+        toast.success('Login com Google realizado com sucesso!');
+        navigate('/');
+      } catch (error) {
+        console.error('Erro completo:', error);
+        toast.error(error.response?.data?.msg || 'Erro ao fazer login com Google');
+      }
+    },
+    onError: (error) => {
+      console.error('Erro no Google Login:', error);
+      toast.error('Erro ao fazer login com Google');
+    }
+  });
   
   return (
     <div className="login-container">
@@ -100,7 +133,11 @@ const Login = () => {
         </div>
         
         <div className="social-buttons">
-          <button className="google-login-btn">
+          <button 
+            className="google-login-btn"
+            onClick={() => handleGoogleLogin()}
+            type="button"
+          >
             <img src={googleIcon} alt="Google" className="social-icon" />
             <span>Fazer login com o Google</span>
           </button>
