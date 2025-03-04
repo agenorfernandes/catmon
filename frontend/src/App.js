@@ -136,8 +136,12 @@ const AppContent = () => {
 };
 
 function App() {
+  // Obter o ID do cliente do Google das variáveis de ambiente
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || 
+    '273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com';
+  
   return (
-    <GoogleOAuthProvider clientId="273781721797-f1ls93taesljc0ic4notel3ev3g4rcqc.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
         <LocationProvider>
           <Router>

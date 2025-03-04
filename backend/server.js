@@ -59,6 +59,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Configuração do CORS
+// Configuração do CORS
 app.use(cors({
   origin: function(origin, callback) {
     // Permitir requisições sem origin (como apps mobile)
@@ -67,14 +68,18 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      `http://${process.env.HOST_IP}:3000`,
-      // Adicione aqui outros domínios permitidos
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      process.env.PUBLIC_URL || 'http://localhost',
+      'https://catmon.com.br' // Adicionar seu domínio de produção
     ];
     
     if (allowedOrigins.indexOf(origin) === -1) {
+      console.log(`Origem bloqueada por CORS: ${origin}`);
       const msg = 'Política CORS não permite acesso deste domínio.';
       return callback(new Error(msg), false);
     }
+    
+    console.log(`Origem permitida por CORS: ${origin}`);
     return callback(null, true);
   },
   credentials: true,

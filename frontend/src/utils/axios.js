@@ -2,12 +2,19 @@ import axios from 'axios';
 
 // Determinar a baseURL com base no ambiente
 const getBaseURL = () => {
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL;
+  
+  if (apiUrl) {
+    return apiUrl;
   }
-  // Caso contrário, tenta descobrir automaticamente
-  const hostname = window.location.hostname;
-  return `http://${hostname}:5000`;
+  
+  // Para ambiente local
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
+  
+  // Para produção com proxy reverso (o /api será mapeado pelo NGINX)
+  return `${window.location.origin}/api`;
 };
 
 const api = axios.create({
@@ -23,7 +30,11 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Usar header x-auth-token para compatibilidade com o backend existente
+      config.headers['x-auth-token'] = token;
+      
+      // Também adicionar no Authorization para maior compatibilidade
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -37,8 +48,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Não redirecionar automaticamente, apenas limpar os dados
       localStorage.removeItem('token');
+      // Não redirecionar automaticamente para não interromper o fluxo
     }
     return Promise.reject(error);
   }
