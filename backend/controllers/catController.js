@@ -4,6 +4,7 @@ const User = require('../models/User');
 const geocoder = require('../utils/geocoder');
 
 // Obter todos os gatos (com filtros e paginação)
+// Obter todos os gatos (com filtros e paginação)
 exports.getAllCats = async (req, res) => {
   try {
     const { 
@@ -23,23 +24,54 @@ exports.getAllCats = async (req, res) => {
     
     // Construir o filtro
     const filter = {};
-    if (status) filter.status = status.split(',');
-    if (health) filter.health = health.split(',');
-    if (gender) filter.gender = gender.split(',');
-    if (estimatedAge) filter.estimatedAge = estimatedAge.split(',');
+    if (status) {
+      if (typeof status === 'string' && status.includes(',')) {
+        filter.status = { $in: status.split(',') };
+      } else {
+        filter.status = status;
+      }
+    }
+    
+    if (health) {
+      if (typeof health === 'string' && health.includes(',')) {
+        filter.health = { $in: health.split(',') };
+      } else {
+        filter.health = health;
+      }
+    }
+    
+    if (gender) {
+      if (typeof gender === 'string' && gender.includes(',')) {
+        filter.gender = { $in: gender.split(',') };
+      } else {
+        filter.gender = gender;
+      }
+    }
+    
+    if (estimatedAge) {
+      if (typeof estimatedAge === 'string' && estimatedAge.includes(',')) {
+        filter.estimatedAge = { $in: estimatedAge.split(',') };
+      } else {
+        filter.estimatedAge = estimatedAge;
+      }
+    }
 
     // Filtro de localização, se fornecido
     if (lat && lng) {
+      // Usar $geoWithin em vez de $nearSphere
       filter.location = {
-        $nearSphere: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(lng), parseFloat(lat)]
-          },
-          $maxDistance: parseInt(radius)
+        $geoWithin: {
+          $centerSphere: [
+            [parseFloat(lng), parseFloat(lat)], 
+            parseFloat(radius) / 6378100 // converter metros para radianos (raio da Terra: 6378100m)
+          ]
         }
       };
+      
+      console.log("Aplicando filtro geoespacial:", filter.location);
     }
+
+    console.log("Filtro completo:", JSON.stringify(filter));
 
     // Executar consulta
     const cats = await Cat.find(filter)
@@ -47,6 +79,8 @@ exports.getAllCats = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .populate('discoveredBy', 'name profilePicture');
+
+    console.log(`Encontrados ${cats.length} gatos.`);
 
     // Contar total para paginação
     const total = await Cat.countDocuments(filter);
@@ -62,7 +96,6 @@ exports.getAllCats = async (req, res) => {
     res.status(500).json({ msg: 'Erro no servidor', error: err.message });
   }
 };
-
 // Obter gato por ID
 exports.getCatById = async (req, res) => {
   try {

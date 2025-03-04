@@ -39,17 +39,27 @@ router.delete('/favorites/:catId', auth, userController.removeFromFavorites);
 
 // @route   GET api/users/ranking
 // @desc    Obter ranking de usuários
-// @access  Private
-router.get('/ranking', auth, userController.getRanking);
+// @access  Public (modificado para permitir acesso sem autenticação)
+router.get('/ranking', userController.getRanking);
 
 // @route   GET api/users/stats/:id?
 // @desc    Obter estatísticas do usuário (opcional: ID do usuário ou usuário atual)
 // @access  Private
 router.get('/stats/:id?', auth, userController.getUserStats);
 
+// @route   GET api/users/achievements/:id?
+// @desc    Obter conquistas do usuário
+// @access  Private
+router.get('/achievements/:id?', auth, userController.getUserAchievements);
+
 // @route   PUT api/users/profile/avatar
 // @desc    Atualizar avatar do usuário
 // @access  Private
 router.put('/profile/avatar', auth, userController.updateUserAvatar);
 
-module.exports = router; 
+// @route   POST api/users/deactivate
+// @desc    Desativar conta de usuário
+// @access  Private
+router.post('/deactivate', auth, userController.deactivateAccount);
+
+module.exports = router;

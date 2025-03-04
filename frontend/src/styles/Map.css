@@ -147,3 +147,44 @@
     height: calc(100vh - 120px); /* Ajusta para navbar e bottom navigation */
   }
 }
+
+/* Adição ao frontend/src/styles/Map.css */
+.loading-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 500;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.error-message {
+  position: absolute;
+  bottom: 70px;
+  left: 10px;
+  right: 10px;
+  background-color: #ffe6e6;
+  color: #ff4343;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  z-index: 500;
+}
+
+.no-cats-message {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Estilizar o popup do Leaflet */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 8px;
+}

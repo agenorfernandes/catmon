@@ -497,6 +497,38 @@ exports.deactivateAccount = async (req, res) => {
   }
 };
 
+// Atualizar avatar do usuário
+exports.updateUserAvatar = async (req, res) => {
+  try {
+    const { avatarId } = req.body;
+    
+    if (!avatarId) {
+      return res.status(400).json({ msg: 'ID do avatar é obrigatório' });
+    }
+    
+    // Atualizar o avatar do usuário
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { 
+        $set: {
+          avatarId,
+          profilePicture: `/assets/avatars/cat-avatar-${avatarId}.png`
+        }
+      },
+      { new: true }
+    ).select('-password -googleId -appleId');
+    
+    if (!user) {
+      return res.status(404).json({ msg: 'Usuário não encontrado' });
+    }
+    
+    res.json(user);
+  } catch (err) {
+    console.error('Erro ao atualizar avatar:', err.message);
+    res.status(500).json({ msg: 'Erro no servidor' });
+  }
+};
+
 // Função auxiliar para obter estatísticas do usuário
 const getUserStats = async (userId) => {
   try {
