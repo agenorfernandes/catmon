@@ -1,5 +1,8 @@
 require('dotenv').config();
 const express = require('express');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -13,10 +16,17 @@ const checkInRoutes = require('./routes/checkInRoutes');
 const userRoutes = require('./routes/userRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
 
+// SSL Configuration
+const sslOptions = {
+  cert: fs.readFileSync('/etc/nginx/ssl/certificate.crt'),
+  key: fs.readFileSync('/etc/nginx/ssl/private.key')
+};
+
 // Print environment for debugging
 console.log('Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
+  HTTPS_PORT: process.env.HTTPS_PORT,
   JWT_SECRET: process.env.JWT_SECRET ? '[SET]' : '[NOT SET]',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '[SET]' : '[NOT SET]',
   MONGODB_URI: process.env.MONGODB_URI ? '[CONTAINS CONNECTION STRING]' : '[NOT SET]',
@@ -29,8 +39,8 @@ const app = express();
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabled for development, enable in production with proper rules
-  crossOriginEmbedderPolicy: false // Allows loading resources from different domains
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 
 // Logging middleware
@@ -43,20 +53,19 @@ if (process.env.NODE_ENV !== 'production') {
 // Compression middleware
 app.use(compression());
 
-// Rate limiting to prevent brute force attacks
+// Rate limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit of 100 requests per IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests from this IP, try again in 15 minutes'
 });
 app.use('/api/', apiLimiter);
 
-// Specific limit for authentication routes
 const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 attempts per hour
+  windowMs: 60 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many login attempts, try again later'
@@ -68,25 +77,27 @@ app.use('/api/auth/register', authLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
     console.log(`CORS request from origin: ${origin || 'no origin'}`);
     
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // In production, be specific about allowed origins
     const allowedOrigins = [
       'https://catmon.com.br',
       'https://www.catmon.com.br'
     ];
+    
+    if (process.env.NODE_ENV !== 'production') {
+      allowedOrigins.push('http://localhost:3000');
+    }
     
     if (allowedOrigins.includes(origin)) {
       console.log(`Origin allowed by CORS: ${origin}`);
       return callback(null, true);
     }
     
-    // If origin not allowed
     console.log(`Origin blocked by CORS: ${origin}`);
     return callback(new Error(`CORS policy does not allow access from ${origin}`), false);
   },
@@ -95,30 +106,30 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 
-// Serve static files from uploads
+// Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Connect to MongoDB Atlas
+// MongoDB Connection
 console.log(`Connecting to MongoDB Atlas (${process.env.NODE_ENV || 'development'})...`);
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000
 })
-  .then(() => console.log('MongoDB Atlas Connected Successfully'))
-  .catch(err => {
-    console.error('Error connecting to MongoDB Atlas:', err.message);
-    process.exit(1);
-  });
+.then(() => console.log('MongoDB Atlas Connected Successfully'))
+.catch(err => {
+  console.error('Error connecting to MongoDB Atlas:', err.message);
+  process.exit(1);
+});
 
-// Set up routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cats', catRoutes);
 app.use('/api/checkins', checkInRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/statistics', statisticsRoutes);
 
-// Health check route
+// Health check
 app.get('/api/health', (req, res) => {
   const uptime = process.uptime();
   const uptimeFormatted = formatUptime(uptime);
@@ -143,33 +154,37 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Format uptime in a readable format
+// Helper function for uptime formatting
 function formatUptime(uptime) {
   const days = Math.floor(uptime / 86400);
   const hours = Math.floor((uptime % 86400) / 3600);
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.round(uptime % 60);
   
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
-  } else if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  } else {
-    return `${seconds}s`;
-  }
+  if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 }
 
-// 404 middleware
-app.use((req, res, next) => {
+// Production static files
+if (process.env.NODE_ENV === 'production') {
+  console.log('Setting up static file serving for production...');
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
+  });
+}
+
+// 404 handler
+app.use((req, res) => {
   res.status(404).json({
     msg: 'Endpoint not found',
     path: req.path
   });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error(`[${new Date().toISOString()}] Error:`, err.stack);
   
@@ -184,59 +199,50 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  console.log('Setting up static file serving for production...');
-  // Serve from the frontend build directory
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
-  // For any route not handled by the API, serve the React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
-  });
-}
+// Server configuration
+const HTTP_PORT = process.env.PORT || 5000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 5443;
+const HOST = '0.0.0.0';
 
-// Port and host
-const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0'; // Allow connections from any IP
+// Create HTTP server
+const httpServer = http.createServer(app);
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`KatMon server running on http://${HOST}:${PORT}`);
+// Create HTTPS server
+const httpsServer = https.createServer(sslOptions, app);
+
+// Start both servers
+httpServer.listen(HTTP_PORT, HOST, () => {
+  console.log(`HTTP server running on http://${HOST}:${HTTP_PORT}`);
+});
+
+httpsServer.listen(HTTPS_PORT, HOST, () => {
+  console.log(`HTTPS server running on https://${HOST}:${HTTPS_PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down server...');
-  server.close(() => {
-    console.log('Server closed');
-    mongoose.connection.close(false, () => {
-      console.log('MongoDB connection closed');
-      process.exit(0);
+// Graceful shutdown
+const gracefulShutdown = () => {
+  console.log('Received shutdown signal, closing servers...');
+  
+  httpServer.close(() => {
+    console.log('HTTP server closed');
+    httpsServer.close(() => {
+      console.log('HTTPS server closed');
+      mongoose.connection.close(false, () => {
+        console.log('MongoDB connection closed');
+        process.exit(0);
+      });
     });
   });
-});
+};
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down server...');
-  server.close(() => {
-    console.log('Server closed');
-    mongoose.connection.close(false, () => {
-      console.log('MongoDB connection closed');
-      process.exit(0);
-    });
-  });
-});
+// Shutdown handlers
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
-// Uncaught exception handling
+// Error handlers
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  // In production, you might want to notify an administrator
-  if (process.env.NODE_ENV === 'production') {
-    // Implement notification logic here
-  }
-  
-  // In production environment, restart the server
-  // In development, exit to avoid unexpected behavior
   if (process.env.NODE_ENV === 'production') {
     console.log('Server will continue running after uncaught exception');
   } else {
@@ -245,10 +251,8 @@ process.on('uncaughtException', (err) => {
   }
 });
 
-// Unhandled promise rejection handling
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Promise Rejection:', reason);
-  // In a production environment, might log to a service
 });
 
-module.exports = app;
+module.exports = { app, httpServer, httpsServer };
