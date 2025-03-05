@@ -1,49 +1,71 @@
 #!/bin/bash
 
-# Deploy script para KatMon
+# KatMon Deployment Script
 
-echo "Iniciando deploy do KatMon..."
+# Set environment variables
+export NODE_ENV=production
+export PATH=$PATH:/usr/local/bin:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
 
-# Configurar ambiente baseado no parâmetro (local ou prod)
-if [ "$1" == "prod" ]; then
-  echo "Configurando para ambiente de produção"
-  export NODE_ENV=production
-  export PUBLIC_URL=https://catmon.com.br
-  export FRONTEND_URL=https://catmon.com.br
-  export API_URL=https://catmon.com.br/api
-else
-  echo "Configurando para ambiente local"
-  export NODE_ENV=development
-  export PUBLIC_URL=http://localhost
-  export FRONTEND_URL=http://localhost:3000
-  export API_URL=http://localhost:5000
-fi
+# Application directory
+APP_DIR="/var/www/katmon"
 
-# Instalar dependências do backend
-echo "Instalando dependências do backend..."
-cd backend
-npm install
+# Log file
+LOG_FILE="$APP_DIR/deploy.log"
 
-# Instalar dependências do frontend
-echo "Instalando dependências do frontend..."
-cd ../frontend
-npm install
+# Function for timestamped logging
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
 
-# Criar build de produção do frontend
-if [ "$1" == "prod" ]; then
-  echo "Criando build de produção do frontend..."
-  npm run build
-fi
+# Print start message
+log "Starting KatMon deployment..."
 
-# Retornar para a raiz
-cd ..
+# Navigate to the project directory
+cd $APP_DIR || { log "Failed to navigate to application directory"; exit 1; }
 
-# Iniciar a aplicação
-if [ "$1" == "prod" ]; then
-  echo "Iniciando aplicação em modo produção..."
-  pm2 start backend/server.js --name katmon-backend
-  echo "Deploy concluído. Aplicação rodando em: $PUBLIC_URL"
-else
-  echo "Iniciando aplicação em modo desenvolvimento..."
-  npm run dev
-fi
+# Pull latest changes
+log "Pulling latest changes from repository..."
+git pull || { log "Failed to pull latest changes"; exit 1; }
+
+# Install backend dependencies
+log "Installing backend dependencies..."
+cd $APP_DIR/backend || { log "Failed to navigate to backend directory"; exit 1; }
+npm ci --production || { log "Failed to install backend dependencies"; exit 1; }
+
+# Install frontend dependencies
+log "Installing frontend dependencies..."
+cd $APP_DIR/frontend || { log "Failed to navigate to frontend directory"; exit 1; }
+npm ci || { log "Failed to install frontend dependencies"; exit 1; }
+
+# Copy production environment files
+log "Copying production environment files..."
+cp $APP_DIR/backend/.env.production $APP_DIR/backend/.env || { log "Failed to copy backend environment file"; exit 1; }
+cp $APP_DIR/frontend/.env.production $APP_DIR/frontend/.env || { log "Failed to copy frontend environment file"; exit 1; }
+
+# Build frontend
+log "Building frontend..."
+npm run build || { log "Failed to build frontend"; exit 1; }
+
+# Ensure uploads directory exists
+log "Ensuring uploads directory exists..."
+mkdir -p $APP_DIR/uploads/cats $APP_DIR/uploads/profiles $APP_DIR/uploads/checkins || { log "Failed to create uploads directories"; exit 1; }
+
+# Set proper permissions
+log "Setting correct permissions..."
+sudo chown -R www-data:www-data $APP_DIR/uploads || { log "Failed to set permissions on uploads directory"; exit 1; }
+sudo chown -R www-data:www-data $APP_DIR/frontend/build || { log "Failed to set permissions on frontend build directory"; exit 1; }
+
+# Restart the backend service
+log "Restarting backend service..."
+cd $APP_DIR || { log "Failed to navigate to application directory"; exit 1; }
+pm2 restart katmon-backend || pm2 start backend/server.js --name katmon-backend || { log "Failed to start/restart backend"; exit 1; }
+
+# Reload nginx
+log "Reloading Nginx..."
+sudo systemctl reload nginx || { log "Failed to reload Nginx"; exit 1; }
+
+# Add a timestamp to indicate successful deployment
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+echo $TIMESTAMP > $APP_DIR/last_deploy.txt
+
+log "Deployment completed successfully!"

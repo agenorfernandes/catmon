@@ -7,106 +7,134 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const compression = require('compression');
-const configDB = require('../config/db');
 const authRoutes = require('./routes/authRoutes');
 const catRoutes = require('./routes/catRoutes');
 const checkInRoutes = require('./routes/checkInRoutes');
 const userRoutes = require('./routes/userRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
 
-// Inicializar app
+// Print environment for debugging
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  JWT_SECRET: process.env.JWT_SECRET ? '[SET]' : '[NOT SET]',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '[SET]' : '[NOT SET]',
+  MONGODB_URI: process.env.MONGODB_URI ? '[CONTAINS CONNECTION STRING]' : '[NOT SET]',
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  PUBLIC_URL: process.env.PUBLIC_URL
+});
+
+// Initialize app
 const app = express();
 
-// Middleware de segurança
+// Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Desativado para desenvolvimento, ativar em produção
-  crossOriginEmbedderPolicy: false // Permite carregar recursos de domínios diferentes
+  contentSecurityPolicy: false, // Disabled for development, enable in production with proper rules
+  crossOriginEmbedderPolicy: false // Allows loading resources from different domains
 }));
 
-// Middleware para logs
+// Logging middleware
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// Middleware para compressão
+// Compression middleware
 app.use(compression());
 
-// Limitar requisições para prevenir ataques de força bruta
+// Rate limiting to prevent brute force attacks
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requisições por IP
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit of 100 requests per IP
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Muitas requisições deste IP, tente novamente em 15 minutos'
+  message: 'Too many requests from this IP, try again in 15 minutes'
 });
 app.use('/api/', apiLimiter);
 
-// Configurar limite específico para rotas de autenticação
+// Specific limit for authentication routes
 const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 10, // 10 tentativas por hora
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 attempts per hour
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Muitas tentativas de login, tente novamente mais tarde'
+  message: 'Too many login attempts, try again later'
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// Middleware
+// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Configuração do CORS
-// Configuração do CORS
+// Improved CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
-    // Permitir requisições sem origin (como apps mobile)
+    console.log(`CORS request from origin: ${origin || 'no origin'}`);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-      process.env.PUBLIC_URL || 'http://localhost',
-      'https://catmon.com.br' // Adicionar seu domínio de produção
-    ];
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.log(`Origem bloqueada por CORS: ${origin}`);
-      const msg = 'Política CORS não permite acesso deste domínio.';
-      return callback(new Error(msg), false);
+    // In production, be specific about allowed origins
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL || 'https://catmon.com.br',
+        process.env.PUBLIC_URL || 'https://catmon.com.br'
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        console.log(`Origin allowed by CORS: ${origin}`);
+        return callback(null, true);
+      }
+    } else {
+      // In development, allow localhost requests
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        process.env.FRONTEND_URL,
+        process.env.PUBLIC_URL
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        console.log(`Origin allowed by CORS: ${origin}`);
+        return callback(null, true);
+      }
     }
     
-    console.log(`Origem permitida por CORS: ${origin}`);
-    return callback(null, true);
+    // If origin not allowed
+    console.log(`Origin blocked by CORS: ${origin}`);
+    return callback(new Error('CORS policy does not allow access from this domain.'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 
-// Servir arquivos estáticos de uploads
+// Serve static files from uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Conectar ao MongoDB Atlas
-console.log(`Conectando ao MongoDB Atlas (${process.env.NODE_ENV || 'development'})...`);
-mongoose.connect(configDB.mongoURI, configDB.options)
-  .then(() => console.log('MongoDB Atlas Conectado com Sucesso'))
+// Connect to MongoDB Atlas
+console.log(`Connecting to MongoDB Atlas (${process.env.NODE_ENV || 'development'})...`);
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000
+})
+  .then(() => console.log('MongoDB Atlas Connected Successfully'))
   .catch(err => {
-    console.error('Erro na conexão com MongoDB Atlas:', err.message);
+    console.error('Error connecting to MongoDB Atlas:', err.message);
     process.exit(1);
   });
 
-// Definir rotas
+// Set up routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cats', catRoutes);
 app.use('/api/checkins', checkInRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/statistics', statisticsRoutes);
 
-// Rota de verificação de saúde
+// Health check route
 app.get('/api/health', (req, res) => {
   const uptime = process.uptime();
   const uptimeFormatted = formatUptime(uptime);
@@ -121,7 +149,7 @@ app.get('/api/health', (req, res) => {
   
   res.json({ 
     status: 'ok', 
-    message: 'API KatMon funcionando',
+    message: 'KatMon API working',
     version: process.env.npm_package_version || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     uptime: uptimeFormatted,
@@ -131,7 +159,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Formatar tempo de execução em formato legível
+// Format uptime in a readable format
 function formatUptime(uptime) {
   const days = Math.floor(uptime / 86400);
   const hours = Math.floor((uptime % 86400) / 3600);
@@ -149,91 +177,94 @@ function formatUptime(uptime) {
   }
 }
 
-// Middleware para tratamento de erros 404
+// 404 middleware
 app.use((req, res, next) => {
   res.status(404).json({
-    msg: 'Endpoint não encontrado',
+    msg: 'Endpoint not found',
     path: req.path
   });
 });
 
-// Middleware para tratamento de erros
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(`[${new Date().toISOString()}] Erro:`, err.stack);
+  console.error(`[${new Date().toISOString()}] Error:`, err.stack);
   
   const statusCode = err.statusCode || 500;
   const errorMessage = process.env.NODE_ENV === 'production' 
-    ? 'Erro interno no servidor' 
+    ? 'Internal server error' 
     : err.message;
   
   res.status(statusCode).json({
     msg: errorMessage,
-    error: process.env.NODE_ENV === 'production' ? 'Entre em contato com o suporte' : err.stack
+    error: process.env.NODE_ENV === 'production' ? 'Contact support' : err.stack
   });
 });
 
-// Servir arquivos estáticos em produção
+// Serve static files in production
 if (process.env.NODE_ENV === 'production') {
+  console.log('Setting up static file serving for production...');
+  // Serve from the frontend build directory
   app.use(express.static(path.join(__dirname, '../frontend/build')));
+  // For any route not handled by the API, serve the React app
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
   });
 }
 
-// Porta
+// Port and host
 const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0'; // Permitir conexões de qualquer IP
+const HOST = '0.0.0.0'; // Allow connections from any IP
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(`Servidor KatMon rodando em http://${HOST}:${PORT}`);
-  console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`KatMon server running on http://${HOST}:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Tratamento de encerramento para graceful shutdown
+// Graceful shutdown handling
 process.on('SIGTERM', () => {
-  console.log('SIGTERM recebido, encerrando servidor...');
+  console.log('SIGTERM received, shutting down server...');
   server.close(() => {
-    console.log('Servidor encerrado');
+    console.log('Server closed');
     mongoose.connection.close(false, () => {
-      console.log('Conexão MongoDB fechada');
+      console.log('MongoDB connection closed');
       process.exit(0);
     });
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT recebido, encerrando servidor...');
+  console.log('SIGINT received, shutting down server...');
   server.close(() => {
-    console.log('Servidor encerrado');
+    console.log('Server closed');
     mongoose.connection.close(false, () => {
-      console.log('Conexão MongoDB fechada');
+      console.log('MongoDB connection closed');
       process.exit(0);
     });
   });
 });
 
-// Tratamento de erros não capturados
+// Uncaught exception handling
 process.on('uncaughtException', (err) => {
-  console.error('Erro não capturado:', err);
-  // Em produção, pode-se enviar uma notificação ao administrador
+  console.error('Uncaught Exception:', err);
+  // In production, you might want to notify an administrator
   if (process.env.NODE_ENV === 'production') {
-    // Implementar notificação
+    // Implement notification logic here
   }
   
-  // Em ambiente de produção, reinicia o servidor
-  // Em desenvolvimento, encerra para evitar comportamento inesperado
+  // In production environment, restart the server
+  // In development, exit to avoid unexpected behavior
   if (process.env.NODE_ENV === 'production') {
-    console.log('Servidor continuará executando após erro não capturado');
+    console.log('Server will continue running after uncaught exception');
   } else {
-    console.log('Servidor será encerrado devido a erro não capturado');
+    console.log('Server will exit due to uncaught exception');
     process.exit(1);
   }
 });
 
-// Tratamento de rejeições de promises não capturadas
+// Unhandled promise rejection handling
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Rejeição de Promise não tratada:', reason);
-  // Em ambiente de produção, pode registrar em um serviço de logs
+  console.error('Unhandled Promise Rejection:', reason);
+  // In a production environment, might log to a service
 });
 
 module.exports = app;

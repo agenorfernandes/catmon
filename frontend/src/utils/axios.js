@@ -1,39 +1,44 @@
 import axios from 'axios';
 
-// Determinar a baseURL com base no ambiente
+// Determine the baseURL based on environment
 const getBaseURL = () => {
-  const apiUrl = process.env.REACT_APP_API_URL;
-  
-  if (apiUrl) {
-    return apiUrl;
+  // First priority: use the configured API URL from environment
+  if (process.env.REACT_APP_API_URL) {
+    console.log('Using API URL from env:', process.env.REACT_APP_API_URL);
+    return process.env.REACT_APP_API_URL;
   }
   
-  // Para ambiente local
+  // For local environment
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('Using localhost API URL');
     return 'http://localhost:5000';
   }
   
-  // Para produção com proxy reverso (o /api será mapeado pelo NGINX)
+  // For production with reverse proxy (the /api will be mapped by NGINX)
+  console.log('Using origin-based API URL:', `${window.location.origin}/api`);
   return `${window.location.origin}/api`;
 };
 
+const apiBaseUrl = getBaseURL();
+console.log('API Base URL configured as:', apiBaseUrl);
+
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000 // 10 segundos
+  timeout: 10000 // 10 seconds
 });
 
-// Interceptador para adicionar token em todas as requisições
+// Interceptor to add token to all requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Usar header x-auth-token para compatibilidade com o backend existente
+      // Use x-auth-token header for compatibility with existing backend
       config.headers['x-auth-token'] = token;
       
-      // Também adicionar no Authorization para maior compatibilidade
+      // Also add it in Authorization for broader compatibility
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
@@ -43,13 +48,14 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptador para tratar erros de autenticação
+// Interceptor to handle authentication errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      console.log('Received 401 Unauthorized, clearing token');
       localStorage.removeItem('token');
-      // Não redirecionar automaticamente para não interromper o fluxo
+      // Don't automatically redirect to avoid interrupting flow
     }
     return Promise.reject(error);
   }

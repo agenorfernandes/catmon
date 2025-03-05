@@ -10,6 +10,7 @@ import appleIcon from '../assets/icons/apple.svg';
 import katmonLogo from '../assets/Logo_Katmon-removebg-preview.svg';
 import './Login.css';
 import { useGoogleLogin } from '@react-oauth/google';
+import api from '../utils/axios';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   
-  // Redirecionar se já estiver autenticado
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/');
@@ -34,7 +35,7 @@ const Login = () => {
   
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Limpar erro do campo ao digitar
+    // Clear field error on typing
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' });
     }
@@ -44,13 +45,13 @@ const Login = () => {
     const newErrors = {};
     
     if (!email) {
-      newErrors.email = 'Email é obrigatório';
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email inválido';
+      newErrors.email = 'Invalid email';
     }
     
     if (!password) {
-      newErrors.password = 'Senha é obrigatória';
+      newErrors.password = 'Password is required';
     }
     
     setErrors(newErrors);
@@ -67,22 +68,24 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const response = await axios.post('/api/auth/login', formData);
+      console.log('Attempting login...');
+      const response = await api.post('/auth/login', formData);
       
-      // Armazenar token no localStorage
+      console.log('Login successful, storing token');
+      // Store token in localStorage
       localStorage.setItem('token', response.data.token);
       
-      // Atualizar estado de autenticação
+      // Update authentication state
       login(response.data.token, response.data.user);
       
-      toast.success('Login realizado com sucesso!');
+      toast.success('Successfully logged in!');
       
-      // Redirecionar para a página anterior ou home
+      // Redirect to previous page or home
       const redirectPath = location.state?.from || '/';
       navigate(redirectPath);
     } catch (error) {
-      console.error('Erro no login:', error.response?.data?.msg || error.message);
-      toast.error(error.response?.data?.msg || 'Erro ao fazer login');
+      console.error('Login error:', error.response?.data?.msg || error.message);
+      toast.error(error.response?.data?.msg || 'Error logging in');
       setLoading(false);
     }
   };
@@ -90,32 +93,28 @@ const Login = () => {
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const response = await axios.post('/api/auth/google', 
-          { token: tokenResponse.access_token },
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            withCredentials: true
-          }
+        console.log('Google login successful, token received');
+        const response = await api.post('/auth/google', 
+          { token: tokenResponse.access_token }
         );
 
-        // Armazenar token no localStorage
+        console.log('Backend authentication successful, storing token');
+        // Store token in localStorage
         localStorage.setItem('token', response.data.token);
         
-        // Atualizar estado de autenticação
+        // Update authentication state
         login(response.data.token, response.data.user);
         
-        toast.success('Login com Google realizado com sucesso!');
+        toast.success('Google login successful!');
         navigate('/');
       } catch (error) {
-        console.error('Erro completo:', error);
-        toast.error(error.response?.data?.msg || 'Erro ao fazer login com Google');
+        console.error('Google login error:', error);
+        toast.error(error.response?.data?.msg || 'Error logging in with Google');
       }
     },
     onError: (error) => {
-      console.error('Erro no Google Login:', error);
-      toast.error('Erro ao fazer login com Google');
+      console.error('Google Login error:', error);
+      toast.error('Error logging in with Google');
     }
   });
   
@@ -128,8 +127,8 @@ const Login = () => {
               <img src={katmonLogo} alt="KatMon Logo" className="login-logo" />
             </div>
           </div>
-          <h1>Entrar no KatMon</h1>
-          <p>Ajude gatos de rua e ganhe pontos!</p>
+          <h1>Login to KatMon</h1>
+          <p>Help stray cats and earn points!</p>
         </div>
         
         <div className="social-buttons">
@@ -139,17 +138,17 @@ const Login = () => {
             type="button"
           >
             <img src={googleIcon} alt="Google" className="social-icon" />
-            <span>Fazer login com o Google</span>
+            <span>Sign in with Google</span>
           </button>
           
           <button className="apple-login-btn">
             <img src={appleIcon} alt="Apple" className="social-icon" />
-            <span>Entrar com Apple</span>
+            <span>Sign in with Apple</span>
           </button>
         </div>
         
         <div className="divider">
-          <span>ou</span>
+          <span>or</span>
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
@@ -163,7 +162,7 @@ const Login = () => {
                 name="email"
                 value={email}
                 onChange={handleChange}
-                placeholder="seu@email.com"
+                placeholder="your@email.com"
                 className={errors.email ? 'error' : ''}
               />
             </div>
@@ -177,8 +176,8 @@ const Login = () => {
           
           <div className="form-group">
             <div className="label-forgot">
-              <label htmlFor="password">Senha</label>
-              <Link to="/forgot-password" className="forgot-link">Esqueceu a senha?</Link>
+              <label htmlFor="password">Password</label>
+              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
             </div>
             <div className="input-wrapper">
               <Lock className="input-icon" />
@@ -188,7 +187,7 @@ const Login = () => {
                 name="password"
                 value={password}
                 onChange={handleChange}
-                placeholder="Sua senha"
+                placeholder="Your password"
                 className={errors.password ? 'error' : ''}
               />
             </div>
@@ -205,14 +204,14 @@ const Login = () => {
             className="login-btn"
             disabled={loading}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Signing in...' : 'Sign in'}
             <ArrowRight size={20} />
           </button>
         </form>
         
         <div className="login-footer">
           <p>
-            Não tem uma conta? <Link to="/register" className="register-link">Cadastre-se</Link>
+            Don't have an account? <Link to="/register" className="register-link">Register</Link>
           </p>
         </div>
       </div>

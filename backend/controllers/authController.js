@@ -1,28 +1,33 @@
 require('dotenv').config();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const config = require('../../config/default.json');
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(config.googleClientId);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const appleSignin = require('apple-signin-auth');
 const axios = require('axios');
 
-// Registrar novo usuário
+// Debug logging for environment
+console.log('Auth Controller Environment:', {
+  JWT_SECRET: process.env.JWT_SECRET ? '[SET]' : '[NOT SET]',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? '[SET]' : '[NOT SET]'
+});
+
+// Register new user
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Verificar se o usuário já existe
+    // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ msg: 'Usuário já existe' });
+      return res.status(400).json({ msg: 'User already exists' });
     }
 
-    // Selecionar um avatar aleatório
-    const avatarId = Math.floor(Math.random() * 10) + 1; // Assumindo 10 avatares
+    // Select a random avatar
+    const avatarId = Math.floor(Math.random() * 10) + 1; // Assuming 10 avatars
     const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
 
-    // Criar novo usuário
+    // Create new user
     user = new User({
       name,
       email,
@@ -34,8 +39,17 @@ exports.register = async (req, res) => {
 
     await user.save();
 
-    // Gerar token
-    const token = user.generateAuthToken();
+    // Generate token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({
       token,
@@ -49,34 +63,43 @@ exports.register = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Register error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Login de usuário
+// User login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Verificar se o usuário existe
+    // Check if user exists
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(400).json({ msg: 'Credenciais inválidas' });
+      return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // Verificar se a senha está correta
+    // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ msg: 'Credenciais inválidas' });
+      return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // Atualizar último login
+    // Update last login
     user.lastLogin = Date.now();
     await user.save();
 
-    // Gerar token
-    const token = user.generateAuthToken();
+    // Generate token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.json({
       token,
@@ -90,208 +113,262 @@ exports.login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Login error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Login com Google
+// Google login
 exports.googleLogin = async (req, res) => {
   try {
+    console.log('Google login request received:', req.body);
     const { token } = req.body;
 
-    // Verificar o token com o Google
-    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const { email, name, picture, sub: googleId } = response.data;
-
-    if (!email) {
-      return res.status(400).json({ msg: 'Email não fornecido pelo Google' });
+    if (!token) {
+      return res.status(400).json({ msg: 'Token is required' });
     }
 
-    // Procurar ou criar usuário
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      // Criar novo usuário
-      const avatarId = Math.floor(Math.random() * 10) + 1;
-      user = new User({
-        name,
-        email,
-        googleId,
-        profilePicture: picture || `/assets/avatars/cat-avatar-${avatarId}.png`,
-        authMethod: 'google',
-        avatarId
+    // Verify the token with Google
+    try {
+      console.log('Verifying token with Google...');
+      
+      const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
+      
+      console.log('Google verification successful');
+      
+      const { email, name, picture, sub: googleId } = response.data;
 
-      await user.save();
-    } else {
-      // Atualizar informações do usuário existente
-      user.googleId = googleId;
-      user.name = name;
-      if (picture) {
-        user.profilePicture = picture;
+      if (!email) {
+        return res.status(400).json({ msg: 'Email not provided by Google' });
       }
-      user.authMethod = 'google';
-      await user.save();
-    }
 
-    // Gerar token JWT
-    const jwtToken = jwt.sign(
-      {
-        user: {
-          id: user.id,
+      // Find or create user
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        console.log('Creating new user from Google login');
+        // Create new user
+        const avatarId = Math.floor(Math.random() * 10) + 1;
+        user = new User({
+          name,
+          email,
+          googleId,
+          profilePicture: picture || `/assets/avatars/cat-avatar-${avatarId}.png`,
+          authMethod: 'google',
+          avatarId
+        });
+
+        await user.save();
+      } else {
+        console.log('Updating existing user from Google login');
+        // Update existing user info
+        user.googleId = googleId;
+        user.name = name;
+        if (picture) {
+          user.profilePicture = picture;
+        }
+        user.authMethod = 'google';
+        user.lastLogin = Date.now();
+        await user.save();
+      }
+
+      // Generate JWT token
+      const jwtToken = jwt.sign(
+        {
+          id: user._id,
           name: user.name,
           email: user.email,
           role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      console.log('Authentication successful, sending response');
+      
+      res.json({
+        token: jwtToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          profilePicture: user.profilePicture,
+          role: user.role,
+          level: user.level,
+          points: user.points
         }
-      },
-      process.env.JWT_SECRET || 'seu_jwt_secret_padrao',
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      token: jwtToken,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        profilePicture: user.profilePicture,
-        role: user.role,
-        level: user.level,
-        points: user.points
-      }
-    });
-
+      });
+    } catch (verificationError) {
+      console.error('Google token verification error:', verificationError);
+      return res.status(401).json({ 
+        msg: 'Invalid Google token',
+        error: verificationError.message
+      });
+    }
   } catch (error) {
-    console.error('Erro detalhado no login com Google:', error);
+    console.error('Detailed error in Google login:', error);
     res.status(500).json({ 
-      msg: 'Erro no servidor durante autenticação Google',
+      msg: 'Server error during Google authentication',
       error: error.message,
       stack: error.stack 
     });
   }
 };
 
-// Login com Apple
+// Apple login
 exports.appleLogin = async (req, res) => {
   try {
     const { idToken, firstName, lastName } = req.body;
     
-    // Verificar token da Apple
-    const appleResponse = await appleSignin.verifyIdToken(
-      idToken, 
-      {
-        audience: config.appleClientId,
-        ignoreExpiration: true
-      }
-    );
-    
-    const { sub: appleId, email } = appleResponse;
-    
-    // Verificar se o usuário já existe
-    let user = await User.findOne({ email });
-    
-    if (!user) {
-      // Selecionar um avatar aleatório
-      const avatarId = Math.floor(Math.random() * 10) + 1;
-      const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
-      
-      // Criar novo usuário
-      user = new User({
-        name: firstName && lastName ? `${firstName} ${lastName}` : 'Usuário Apple',
-        email,
-        authMethod: 'apple',
-        appleId,
-        avatarId,
-        profilePicture
-      });
-      
-      await user.save();
-    } else {
-      // Atualizar usuário existente com informações da Apple
-      user.appleId = appleId;
-      
-      // Atualizar avatar somente se usuário não tiver escolhido um personalizado
-      if (!user.avatarId) {
-        const avatarId = Math.floor(Math.random() * 10) + 1;
-        user.avatarId = avatarId;
-        user.profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
-      }
-      
-      user.lastLogin = Date.now();
-      await user.save();
+    if (!idToken) {
+      return res.status(400).json({ msg: 'ID Token is required' });
     }
     
-    // Gerar token
-    const token = user.generateAuthToken();
-    
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        profilePicture: user.profilePicture,
-        level: user.level,
-        points: user.points
+    // Verify Apple token
+    try {
+      console.log('Verifying token with Apple...');
+      
+      const appleResponse = await appleSignin.verifyIdToken(
+        idToken, 
+        {
+          audience: process.env.APPLE_CLIENT_ID,
+          ignoreExpiration: true
+        }
+      );
+      
+      console.log('Apple verification successful');
+      
+      const { sub: appleId, email } = appleResponse;
+      
+      if (!email) {
+        return res.status(400).json({ msg: 'Email not provided by Apple' });
       }
-    });
+      
+      // Check if user already exists
+      let user = await User.findOne({ email });
+      
+      if (!user) {
+        console.log('Creating new user from Apple login');
+        // Select a random avatar
+        const avatarId = Math.floor(Math.random() * 10) + 1;
+        const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+        
+        // Create new user
+        user = new User({
+          name: firstName && lastName ? `${firstName} ${lastName}` : 'Apple User',
+          email,
+          authMethod: 'apple',
+          appleId,
+          avatarId,
+          profilePicture
+        });
+        
+        await user.save();
+      } else {
+        console.log('Updating existing user from Apple login');
+        // Update existing user with Apple info
+        user.appleId = appleId;
+        
+        // Update avatar only if user doesn't have a custom one
+        if (!user.avatarId) {
+          const avatarId = Math.floor(Math.random() * 10) + 1;
+          user.avatarId = avatarId;
+          user.profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
+        }
+        
+        user.lastLogin = Date.now();
+        await user.save();
+      }
+      
+      // Generate token
+      const token = jwt.sign(
+        {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      
+      console.log('Authentication successful, sending response');
+      
+      res.json({
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          profilePicture: user.profilePicture,
+          level: user.level,
+          points: user.points
+        }
+      });
+    } catch (verificationError) {
+      console.error('Apple token verification error:', verificationError);
+      return res.status(401).json({ 
+        msg: 'Invalid Apple token',
+        error: verificationError.message
+      });
+    }
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Apple login error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Obter dados do usuário atual
+// Get current user data
 exports.getMe = async (req, res) => {
   try {
+    console.log('Getting user data for user ID:', req.user.id);
     const user = await User.findById(req.user.id).select('-password');
     
     if (!user) {
-      return res.status(404).json({ msg: 'Usuário não encontrado' });
+      return res.status(404).json({ msg: 'User not found' });
     }
     
     res.json(user);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Get user error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
 
-// Verificar token
+// Verify token
 exports.verifyToken = (req, res) => {
   try {
     const token = req.header('x-auth-token');
     
     if (!token) {
-      return res.status(401).json({ msg: 'Sem token, autorização negada' });
+      return res.status(401).json({ msg: 'No token, authorization denied', valid: false });
     }
     
-    jwt.verify(token, config.jwtSecret);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    res.json({ valid: true });
+    res.json({ valid: true, user: decoded });
   } catch (err) {
-    res.status(401).json({ valid: false });
+    console.error('Token verification error:', err.message);
+    res.status(401).json({ msg: 'Token is not valid', valid: false });
   }
 };
 
-// Atualizar avatar do usuário
+// Update user avatar
 exports.updateAvatar = async (req, res) => {
   try {
     const { avatarId } = req.body;
     
     if (!avatarId || avatarId < 1 || avatarId > 10) {
-      return res.status(400).json({ msg: 'ID de avatar inválido' });
+      return res.status(400).json({ msg: 'Invalid avatar ID' });
     }
     
     const profilePicture = `/assets/avatars/cat-avatar-${avatarId}.png`;
     
-    // Atualizar avatar do usuário
+    // Update user avatar
     const user = await User.findByIdAndUpdate(
       req.user.id, 
       { 
@@ -304,12 +381,12 @@ exports.updateAvatar = async (req, res) => {
     ).select('-password');
     
     if (!user) {
-      return res.status(404).json({ msg: 'Usuário não encontrado' });
+      return res.status(404).json({ msg: 'User not found' });
     }
     
     res.json(user);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Erro no servidor' });
+    console.error('Update avatar error:', err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 };
