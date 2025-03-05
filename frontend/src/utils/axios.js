@@ -1,5 +1,4 @@
 import axios from 'axios';
-import https from 'https';
 
 const getBaseURL = () => {
   if (process.env.REACT_APP_API_URL) {
@@ -11,7 +10,7 @@ const getBaseURL = () => {
     return 'https://catmon.com.br/api';
   }
   
-  return 'https://catmon.com.br:5000';
+  return 'http://localhost:5000/api';
 };
 
 const apiBaseUrl = getBaseURL();
@@ -23,10 +22,7 @@ const api = axios.create({
     'Content-Type': 'application/json'
   },
   timeout: 10000,
-  withCredentials: true,
-  httpsAgent: new https.Agent({  
-    rejectUnauthorized: false // Only use in development, remove in production
-  })
+  withCredentials: true
 });
 
 export default api;

@@ -79,32 +79,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration
 app.use(cors({
-  origin: function(origin, callback) {
-    console.log(`CORS request from origin: ${origin || 'no origin'}`);
-    
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'https://catmon.com.br',
-      'https://www.catmon.com.br'
-    ];
-    
-    if (process.env.NODE_ENV !== 'production') {
-      allowedOrigins.push('http://localhost:3000');
-    }
-    
-    if (allowedOrigins.includes(origin)) {
-      console.log(`Origin allowed by CORS: ${origin}`);
-      return callback(null, true);
-    }
-    
-    console.log(`Origin blocked by CORS: ${origin}`);
-    return callback(new Error(`CORS policy does not allow access from ${origin}`), false);
-  },
+  origin: process.env.CORS_ALLOWED_ORIGINS.split(','),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.use('/assets', express.static(path.join(__dirname, '../frontend/build/assets')));
+app.use('/static', express.static(path.join(__dirname, '../frontend/src/assets')));
+app.use('/assets', express.static(path.join(__dirname, '../frontend/src/assets')));
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -131,27 +116,12 @@ app.use('/api/statistics', statisticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  const uptime = process.uptime();
-  const uptimeFormatted = formatUptime(uptime);
-  
-  const memoryUsage = process.memoryUsage();
-  const memoryStats = {
-    rss: `${Math.round(memoryUsage.rss / 1024 / 1024 * 100) / 100} MB`,
-    heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100} MB`,
-    heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100} MB`,
-    external: `${Math.round(memoryUsage.external / 1024 / 1024 * 100) / 100} MB`
-  };
-  
-  res.json({ 
-    status: 'ok', 
-    message: 'KatMon API working',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    uptime: uptimeFormatted,
-    memory: memoryStats,
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+  res.json({ status: 'ok', environment: process.env.NODE_ENV });
+});
+
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
 });
 
 // Helper function for uptime formatting
