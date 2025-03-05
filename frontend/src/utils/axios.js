@@ -7,12 +7,12 @@ const getBaseURL = () => {
     return process.env.REACT_APP_API_URL;
   }
   
-  // Produção: usar origem atual + /api
+  // Produção: usar HTTPS
   if (process.env.NODE_ENV === 'production') {
-    return `${window.location.origin}/api`;
+    return 'https://catmon.com.br/api';
   }
   
-  // Desenvolvimento: localhost padrão
+  // Desenvolvimento: localhost com HTTPS
   return 'https://catmon.com.br:5000';
 };
 

@@ -76,29 +76,14 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // In production, be specific about allowed origins
-    if (process.env.NODE_ENV === 'production') {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL || 'https://catmon.com.br',
-        process.env.PUBLIC_URL || 'https://catmon.com.br'
-      ];
-      
-      if (allowedOrigins.includes(origin)) {
-        console.log(`Origin allowed by CORS: ${origin}`);
-        return callback(null, true);
-      }
-    } else {
-      // In development, allow localhost requests
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        process.env.FRONTEND_URL,
-        process.env.PUBLIC_URL
-      ];
-      
-      if (allowedOrigins.includes(origin)) {
-        console.log(`Origin allowed by CORS: ${origin}`);
-        return callback(null, true);
-      }
+    const allowedOrigins = [
+      'https://catmon.com.br',
+      'https://www.catmon.com.br'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log(`Origin allowed by CORS: ${origin}`);
+      return callback(null, true);
     }
     
     // If origin not allowed
