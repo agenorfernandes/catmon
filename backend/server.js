@@ -68,12 +68,47 @@ app.use('/api/auth/register', authLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Improved CORS configuration
-const cors = require('cors');
-const corsConfig = require('./config/corsConfig');
-
-// CORS Configuration
-app.use(cors(corsConfig));
+app.use(cors({
+  origin: function(origin, callback) {
+    console.log(`CORS request from origin: ${origin || 'no origin'}`);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // In production, be specific about allowed origins
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL || 'https://catmon.com.br',
+        process.env.PUBLIC_URL || 'https://catmon.com.br'
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        console.log(`Origin allowed by CORS: ${origin}`);
+        return callback(null, true);
+      }
+    } else {
+      // In development, allow localhost requests
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        process.env.FRONTEND_URL,
+        process.env.PUBLIC_URL
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        console.log(`Origin allowed by CORS: ${origin}`);
+        return callback(null, true);
+      }
+    }
+    
+    // If origin not allowed
+    console.log(`Origin blocked by CORS: ${origin}`);
+    return callback(new Error(`CORS policy does not allow access from ${origin}`), false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+}));
 
 // Serve static files from uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
