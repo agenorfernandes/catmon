@@ -13,7 +13,7 @@ const getBaseURL = () => {
   }
   
   // Desenvolvimento: localhost padrão
-  return 'http://catmon.com.br:5000';
+  return 'https://catmon.com.br:5000';
 };
 
 const apiBaseUrl = getBaseURL();
