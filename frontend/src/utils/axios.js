@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-  // Prioridade: variável de ambiente
+  // Prioridade 1: variável de ambiente
   if (process.env.REACT_APP_API_URL) {
     console.log('Usando URL da API do ambiente:', process.env.REACT_APP_API_URL);
     return process.env.REACT_APP_API_URL;
@@ -24,7 +24,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 10000,
+  withCredentials: true
 });
 
 export default api;
