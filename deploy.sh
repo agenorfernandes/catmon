@@ -1,70 +1,39 @@
 #!/bin/bash
 
-# KatMon Simplified Deployment Script
+# Very Simple KatMon Deployment Script
+# Just starts the backend using the production .env file
 
-# Detect script location and set APP_DIR accordingly
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-APP_DIR="$( dirname "$SCRIPT_DIR" )"  # Assume script is in a subdirectory of the app
-
-# Set environment variables
-export PATH=$PATH:/usr/local/bin:$HOME/.nvm/versions/node/v18.16.0/bin
-
-# Log file
-LOG_FILE="$APP_DIR/deploy.log"
-
-# Function for timestamped logging
+# Function for logging
 log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Print start message and environment info
-log "Starting KatMon services..."
-log "Detected application directory: $APP_DIR"
+# Project directory is the directory where the script is located
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+log "Starting KatMon backend service from $PROJECT_DIR..."
 log "Running as user: $(whoami)"
 
 # Ensure uploads directory exists
-log "Ensuring uploads directory exists..."
-mkdir -p $APP_DIR/uploads/cats $APP_DIR/uploads/profiles $APP_DIR/uploads/checkins || { log "Failed to create uploads directories"; exit 1; }
+log "Creating uploads directory if it doesn't exist..."
+mkdir -p "$PROJECT_DIR/uploads/cats" "$PROJECT_DIR/uploads/profiles" "$PROJECT_DIR/uploads/checkins"
 
-# Set proper permissions
-log "Setting correct permissions..."
-sudo chown -R $(whoami):$(whoami) $APP_DIR/uploads || { log "Failed to set permissions on uploads directory"; exit 1; }
+# Start backend service with production environment
+log "Starting backend service with production environment..."
+cd "$PROJECT_DIR/backend"
 
-# Restart the backend service
-log "Starting/restarting backend service..."
-cd $APP_DIR/backend || { log "Failed to navigate to backend directory"; exit 1; }
-pm2 restart katmon-backend || pm2 start server.js --name katmon-backend || { log "Failed to start/restart backend"; exit 1; }
-
-# Restart the frontend service (in development mode)
-log "Starting/restarting frontend service in development mode..."
-cd $APP_DIR/frontend || { log "Failed to navigate to frontend directory"; exit 1; }
-# Detect OS for proper start command
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-  # Windows system
-  log "Detected Windows system, using Windows-specific start command"
-  pm2 restart katmon-frontend || pm2 start --name katmon-frontend npm -- run start-windows || { log "Failed to start/restart frontend"; exit 1; }
-else
-  # Unix-like system (Linux, macOS)
-  log "Detected Unix-like system, using standard start command"
-  pm2 restart katmon-frontend || pm2 start --name katmon-frontend npm -- run start || { log "Failed to start/restart frontend"; exit 1; }
+# Stop existing backend service if running
+if pm2 list | grep -q "katmon-backend"; then
+  log "Stopping existing backend service..."
+  pm2 stop katmon-backend
+  pm2 delete katmon-backend
 fi
 
-# Reload nginx
-log "Reloading Nginx..."
-sudo systemctl reload nginx || { log "Failed to reload Nginx"; exit 1; }
+# Start new backend with production environment
+log "Starting backend with production environment variables..."
+NODE_ENV=production pm2 start server.js --name katmon-backend
 
-# Add a timestamp to indicate successful deployment
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-echo $TIMESTAMP > $APP_DIR/last_startup.txt
-
-log "Services started successfully!"
-log "PM2 process status:"
+log "Backend service started. Current PM2 processes:"
 pm2 list
 
-# Check if services are running
-if pm2 show katmon-backend >/dev/null 2>&1 && pm2 show katmon-frontend >/dev/null 2>&1; then
-  log "All services running properly."
-else
-  log "WARNING: Some services may have failed to start. Check logs for details."
-  exit 1
-fi
+log "Deployment complete!"
