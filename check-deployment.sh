@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# KatMon Deployment Check Script
+# catMon Deployment Check Script
 
 # Set environment variables
 export PATH=$PATH:/usr/local/bin:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
 
 # Application directory
-APP_DIR="/var/www/katmon"
+APP_DIR="/var/www/catmon"
 
 # Log file
 LOG_FILE="$APP_DIR/deployment-check.log"
@@ -17,11 +17,11 @@ log() {
 }
 
 # Print start message
-log "Starting KatMon deployment check..."
+log "Starting catMon deployment check..."
 
 # Check if backend is running
 log "Checking backend service status..."
-if pm2 list | grep -q "katmon-backend"; then
+if pm2 list | grep -q "catmon-backend"; then
   log "✅ Backend service is running"
 else
   log "❌ Backend service is NOT running"
@@ -61,7 +61,7 @@ fi
 
 # Check Frontend
 log "Checking frontend..."
-if curl -s https://catmon.com.br | grep -q "KatMon"; then
+if curl -s https://catmon.com.br | grep -q "catMon"; then
   log "✅ Frontend check passed"
 else
   log "❌ Frontend check failed"

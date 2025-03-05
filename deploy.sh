@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# KatMon Deployment Script
+# catMon Deployment Script
 
 # Set environment variables
 export NODE_ENV=production
 export PATH=$PATH:/usr/local/bin:/home/ubuntu/.nvm/versions/node/v18.16.0/bin
 
 # Application directory
-APP_DIR="/var/www/katmon"
+APP_DIR="/var/www/catmon"
 
 # Log file
 LOG_FILE="$APP_DIR/deploy.log"
@@ -18,7 +18,7 @@ log() {
 }
 
 # Print start message
-log "Starting KatMon deployment..."
+log "Starting catMon deployment..."
 
 # Navigate to the project directory
 cd $APP_DIR || { log "Failed to navigate to application directory"; exit 1; }
@@ -58,7 +58,7 @@ sudo chown -R www-data:www-data $APP_DIR/frontend/build || { log "Failed to set 
 # Restart the backend service
 log "Restarting backend service..."
 cd $APP_DIR || { log "Failed to navigate to application directory"; exit 1; }
-pm2 restart katmon-backend || pm2 start backend/server.js --name katmon-backend || { log "Failed to start/restart backend"; exit 1; }
+pm2 restart catmon-backend || pm2 start backend/server.js --name catmon-backend || { log "Failed to start/restart backend"; exit 1; }
 
 # Reload nginx
 log "Reloading Nginx..."
